@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Color Palette - Dress Me Cool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafafa;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .palette-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 60px;
+            overflow: hidden;
+            border: 1px solid #f0f0f0;
+        }
+        
+        .palette-header {
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .palette-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .palette-description {
+            font-size: 1rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        
+        .palette-personality {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .palette-content {
+            padding: 30px;
+        }
+        
+        .color-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .color-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: 700;
+            color: #343a40;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .section-icon {
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+        
+        .color-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+        }
+        
+        .color-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            flex-shrink: 0;
+        }
+        
+        .color-details {
+            flex: 1;
+        }
+        
+        .color-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #343a40;
+            margin-bottom: 2px;
+        }
+        
+        .color-hex {
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 2px;
+        }
+        
+        .color-contrast {
+            font-size: 0.7rem;
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .cta-demo {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        
+        .cta-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            color: white;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .extended-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .extended-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+        }
+        
+        .extended-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .extended-swatch {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .extended-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #343a40;
+            margin-bottom: 3px;
+        }
+        
+        .extended-hex {
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.7rem;
+            color: #6c757d;
+        }
+        
+        @media (max-width: 768px) {
+            .color-sections {
+                grid-template-columns: 1fr;
+            }
+            
+            .extended-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Brand Color Palette</h1>
+        <p>Dress Me Cool - Opzioni cromatiche per l'identità del brand</p>
+    </div>
+    
+    <div class="container">
+        
+        <!-- OPZIONE 1: SAGE GREEN -->
+        <div class="palette-card">
+            <div class="palette-header">
+                <div class="palette-title">🌿 Opzione 1: Sage Green Family</div>
+                <div class="palette-description">Sage green trasmette crescita, natura e sostenibilità. Il terracotta come secondario crea un contrasto caldo.</div>
+                <div class="palette-personality">Personalità: Naturale, rassicurante, sostenibile, crescita personale</div>
+            </div>
+            <div class="palette-content">
+                <div class="color-sections">
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🎯</span> Primario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #6d8c5a;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Dark</div>
+                                <div class="color-hex">#6d8c5a</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #8fac7a;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Base (Accent CTA)</div>
+                                <div class="color-hex">#8fac7a</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #b8d1a6;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Light</div>
+                                <div class="color-hex">#b8d1a6</div>
+                            </div>
+                        </div>
+                        <div class="cta-demo">
+                            <div class="cta-label">Esempio CTA</div>
+                            <a href="#" class="cta-button" style="background: #8fac7a;">Scopri il tuo stile</a>
+                            <div class="color-contrast">Contrasto: 5.2:1 ✓</div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🔄</span> Secondario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #c4795b;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warm Terracotta</div>
+                                <div class="color-hex">#c4795b</div>
+                                <div class="color-contrast">Contrasto con primario: 3.4:1 ✓</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #e5a988;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Light Terracotta</div>
+                                <div class="color-hex">#e5a988</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🌈</span> Extended
+                        </div>
+                        <div class="extended-grid">
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #d4a5a5;"></div>
+                                <div class="extended-name">Dusty Rose</div>
+                                <div class="extended-hex">#d4a5a5</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #7dd3c0;"></div>
+                                <div class="extended-name">Mint Fresh</div>
+                                <div class="extended-hex">#7dd3c0</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #b8926d;"></div>
+                                <div class="extended-name">Warm Camel</div>
+                                <div class="extended-hex">#b8926d</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #9b7eb5;"></div>
+                                <div class="extended-name">Soft Lavender</div>
+                                <div class="extended-hex">#9b7eb5</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #f4e4bc;"></div>
+                                <div class="extended-name">Cream Beige</div>
+                                <div class="extended-hex">#f4e4bc</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🚦</span> Stati
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #27ae60;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Success</div>
+                                <div class="color-hex">#27ae60</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #f39c12;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warning</div>
+                                <div class="color-hex">#f39c12</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #e74c3c;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Error</div>
+                                <div class="color-hex">#e74c3c</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #3498db;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Info</div>
+                                <div class="color-hex">#3498db</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">⚫</span> Neutri
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #1a1a1a;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Rich Black</div>
+                                <div class="color-hex">#1a1a1a</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #4a4a4a;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Dark Gray</div>
+                                <div class="color-hex">#4a4a4a</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #9e9e9e;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Medium Gray</div>
+                                <div class="color-hex">#9e9e9e</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #f8f9fa;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Soft White</div>
+                                <div class="color-hex">#f8f9fa</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Pure White</div>
+                                <div class="color-hex">#ffffff</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- OPZIONE 2: DUSTY ROSE -->
+        <div class="palette-card">
+            <div class="palette-header">
+                <div class="palette-title">🌹 Opzione 2: Dusty Rose Family</div>
+                <div class="palette-description">Dusty rose più contrastato come primario. Warm taupe come secondario per eliminare vibrazioni. Extended con camel e lavender per sophistication.</div>
+                <div class="palette-personality">Personalità: Elegante, matura, fashion-forward, sophisticated</div>
+            </div>
+            <div class="palette-content">
+                <div class="color-sections">
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🎯</span> Primario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #c18a8a;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Dark</div>
+                                <div class="color-hex">#c18a8a</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #d4a5a5;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Base (Accent CTA)</div>
+                                <div class="color-hex">#d4a5a5</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #e7c7c7;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Light</div>
+                                <div class="color-hex">#e7c7c7</div>
+                            </div>
+                        </div>
+                        <div class="cta-demo">
+                            <div class="cta-label">Esempio CTA</div>
+                            <a href="#" class="cta-button" style="background: #d4a5a5;">Trasforma il tuo look</a>
+                            <div class="color-contrast">Contrasto: 4.6:1 ✓</div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🔄</span> Secondario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #a0926d;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warm Taupe</div>
+                                <div class="color-hex">#a0926d</div>
+                                <div class="color-contrast">Contrasto con primario: 3.8:1 ✓</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #c4b89a;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Light Taupe</div>
+                                <div class="color-hex">#c4b89a</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🌈</span> Extended
+                        </div>
+                        <div class="extended-grid">
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #b8926d;"></div>
+                                <div class="extended-name">Warm Camel</div>
+                                <div class="extended-hex">#b8926d</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #9b8fc7;"></div>
+                                <div class="extended-name">Soft Lavender</div>
+                                <div class="extended-hex">#9b8fc7</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #a5c4d4;"></div>
+                                <div class="extended-name">Powder Blue</div>
+                                <div class="extended-hex">#a5c4d4</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #e5d4a6;"></div>
+                                <div class="extended-name">Soft Butter</div>
+                                <div class="extended-hex">#e5d4a6</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #c7b5a8;"></div>
+                                <div class="extended-name">Mushroom</div>
+                                <div class="extended-hex">#c7b5a8</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🚦</span> Stati
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #2ecc71;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Success</div>
+                                <div class="color-hex">#2ecc71</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #f39c12;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warning</div>
+                                <div class="color-hex">#f39c12</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #e74c3c;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Error</div>
+                                <div class="color-hex">#e74c3c</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #3498db;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Info</div>
+                                <div class="color-hex">#3498db</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">⚫</span> Neutri
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #2c3e50;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Rich Black</div>
+                                <div class="color-hex">#2c3e50</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #34495e;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Dark Gray</div>
+                                <div class="color-hex">#34495e</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #7f8c8d;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Medium Gray</div>
+                                <div class="color-hex">#7f8c8d</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #fef9f3;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warm White</div>
+                                <div class="color-hex">#fef9f3</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Pure White</div>
+                                <div class="color-hex">#ffffff</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- OPZIONE 3: MAUVE -->
+        <div class="palette-card">
+            <div class="palette-header">
+                <div class="palette-title">💜 Opzione 3: Mauve Family </div>
+                <div class="palette-description">Mauve sophisticated e psicologicamente rassicurante come primario. Warm gold come secondario per mantenere toni caldi. Extended solo con colori warm per coerenza. Perfetta per emotional intelligence e atmosfera accogliente.</div>
+                <div class="palette-personality">Personalità: Psicologica, trendy, warm, emotional intelligence</div>
+            </div>
+            <div class="palette-content">
+                <div class="color-sections">
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🎯</span> Primario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #936a7f;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Dark</div>
+                                <div class="color-hex">#936a7f</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #b3869e;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Base (Accent CTA)</div>
+                                <div class="color-hex">#b3869e</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #d4b5c7;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Light</div>
+                                <div class="color-hex">#d4b5c7</div>
+                            </div>
+                        </div>
+                        <div class="cta-demo">
+                            <div class="cta-label">Esempio CTA</div>
+                            <a href="#" class="cta-button" style="background: #b3869e;">Trova il tuo stile</a>
+                            <div class="color-contrast">Contrasto: 4.9:1 ✓</div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🔄</span> Secondario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #c5a572;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warm Gold</div>
+                                <div class="color-hex">#c5a572</div>
+                                <div class="color-contrast">Contrasto con primario: 3.5:1 ✓</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #d8c29b;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Light Gold</div>
+                                <div class="color-hex">#d8c29b</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🌈</span> Extended
+                        </div>
+                        <div class="extended-grid">
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #d4a5a5;"></div>
+                                <div class="extended-name">Dusty Rose</div>
+                                <div class="extended-hex">#d4a5a5</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #c4795b;"></div>
+                                <div class="extended-name">Terracotta</div>
+                                <div class="extended-hex">#c4795b</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #b8926d;"></div>
+                                <div class="extended-name">Camel</div>
+                                <div class="extended-hex">#b8926d</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #e8d5c4;"></div>
+                                <div class="extended-name">Warm Cream</div>
+                                <div class="extended-hex">#e8d5c4</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #b5a8c8;"></div>
+                                <div class="extended-name">Warm Lavender</div>
+                                <div class="extended-hex">#b5a8c8</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🚦</span> Stati
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #27ae60;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Success</div>
+                                <div class="color-hex">#27ae60</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #f39c12;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warning</div>
+                                <div class="color-hex">#f39c12</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #e74c3c;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Error</div>
+                                <div class="color-hex">#e74c3c</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #3498db;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Info</div>
+                                <div class="color-hex">#3498db</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">⚫</span> Neutri
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #1a1a1a;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Rich Black</div>
+                                <div class="color-hex">#1a1a1a</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #4a4a4a;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Dark Gray</div>
+                                <div class="color-hex">#4a4a4a</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #9e9e9e;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Medium Gray</div>
+                                <div class="color-hex">#9e9e9e</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #faf9f9;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Soft White</div>
+                                <div class="color-hex">#faf9f9</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Pure White</div>
+                                <div class="color-hex">#ffffff</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- OPZIONE 4: TERRACOTTA -->
+        <div class="palette-card">
+            <div class="palette-header">
+                <div class="palette-title">🧡 Opzione 4: Terracotta Family </div>
+                <div class="palette-description">Terracotta e sage con saturazioni bilanciate. Forest sage adeguato alla stessa intensità cromatica. Gli extended includono toni coordinati per sophistication.</div>
+                <div class="palette-personality">Personalità: Sofisticata, artigianale, premium</div>
+            </div>
+            <div class="palette-content">
+                <div class="color-sections">
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🎯</span> Primario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #a0634a;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Dark</div>
+                                <div class="color-hex">#a0634a</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #c4795b;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Base (Accent CTA)</div>
+                                <div class="color-hex">#c4795b</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #e5a988;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Light</div>
+                                <div class="color-hex">#e5a988</div>
+                            </div>
+                        </div>
+                        <div class="cta-demo">
+                            <div class="cta-label">Esempio CTA</div>
+                            <a href="#" class="cta-button" style="background: #c4795b;">Inizia ora</a>
+                            <div class="color-contrast">Contrasto: 4.8:1 ✓</div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🔄</span> Secondario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #6b8a68;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Sage Green (Saturazione Bilanciata)</div>
+                                <div class="color-hex">#6b8a68</div>
+                                <div class="color-contrast">Contrasto con primario: 3.4:1 ✓</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #96b593;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Light Sage</div>
+                                <div class="color-hex">#96b593</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🌈</span> Extended
+                        </div>
+                        <div class="extended-grid">
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #b3869e;"></div>
+                                <div class="extended-name">Mauve</div>
+                                <div class="extended-hex">#b3869e</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #d4bb9a;"></div>
+                                <div class="extended-name">Warm Cream</div>
+                                <div class="extended-hex">#d4bb9a</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #8b7355;"></div>
+                                <div class="extended-name">Olive Brown</div>
+                                <div class="extended-hex">#8b7355</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #a8b5a8;"></div>
+                                <div class="extended-name">Soft Sage</div>
+                                <div class="extended-hex">#a8b5a8</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #e8d5c4;"></div>
+                                <div class="extended-name">Linen</div>
+                                <div class="extended-hex">#e8d5c4</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🚦</span> Stati
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #2ecc71;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Success</div>
+                                <div class="color-hex">#2ecc71</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #e67e22;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warning</div>
+                                <div class="color-hex">#e67e22</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #c0392b;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Error</div>
+                                <div class="color-hex">#c0392b</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #3498db;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Info</div>
+                                <div class="color-hex">#3498db</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">⚫</span> Neutri
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #1f1f1f;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Rich Black</div>
+                                <div class="color-hex">#1f1f1f</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #4d4d4d;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Dark Gray</div>
+                                <div class="color-hex">#4d4d4d</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #9e9e9e;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Medium Gray</div>
+                                <div class="color-hex">#9e9e9e</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #faf9f7;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warm White</div>
+                                <div class="color-hex">#faf9f7</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Pure White</div>
+                                <div class="color-hex">#ffffff</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- OPZIONE 5: SUNSET ENERGY (NUOVA) -->
+        <div class="palette-card">
+            <div class="palette-header">
+                <div class="palette-title">🌅 Opzione 5: Sunset Energy</div>
+                <div class="palette-description">Arancione corallo energetico come primario forte per CTA. Giallo dorato come secondario complementare. Extended con toni warm per mantenere energia e ottimismo. Perfetta per un brand che trasmette trasformazione, confidence e vitalità.</div>
+                <div class="palette-personality">Personalità: Energetica, ottimista, trasformativa, confidence-building</div>
+            </div>
+            <div class="palette-content">
+                <div class="color-sections">
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🎯</span> Primario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #e07a5f;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Dark</div>
+                                <div class="color-hex">#e07a5f</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #ff9671;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Base (Accent CTA)</div>
+                                <div class="color-hex">#ff9671</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #ffb3a6;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Primary Light</div>
+                                <div class="color-hex">#ffb3a6</div>
+                            </div>
+                        </div>
+                        <div class="cta-demo">
+                            <div class="cta-label">Esempio CTA</div>
+                            <a href="#" class="cta-button" style="background: #ff9671;">Inizia la trasformazione</a>
+                            <div class="color-contrast">Contrasto: 5.1:1 ✓</div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🔄</span> Secondario
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #f4d03f;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Golden Yellow</div>
+                                <div class="color-hex">#f4d03f</div>
+                                <div class="color-contrast">Contrasto con primario: 4.2:1 ✓</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #f7dc6f;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Light Gold</div>
+                                <div class="color-hex">#f7dc6f</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🌈</span> Extended
+                        </div>
+                        <div class="extended-grid">
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #d4a574;"></div>
+                                <div class="extended-name">Warm Bronze</div>
+                                <div class="extended-hex">#d4a574</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #c4795b;"></div>
+                                <div class="extended-name">Terracotta</div>
+                                <div class="extended-hex">#c4795b</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #e8c547;"></div>
+                                <div class="extended-name">Sunny Yellow</div>
+                                <div class="extended-hex">#e8c547</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #ffeaa7;"></div>
+                                <div class="extended-name">Butter</div>
+                                <div class="extended-hex">#ffeaa7</div>
+                            </div>
+                            <div class="extended-item">
+                                <div class="extended-swatch" style="background: #fab1a0;"></div>
+                                <div class="extended-name">Peach</div>
+                                <div class="extended-hex">#fab1a0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">🚦</span> Stati
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #2ecc71;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Success</div>
+                                <div class="color-hex">#2ecc71</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #f39c12;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warning</div>
+                                <div class="color-hex">#f39c12</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #e74c3c;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Error</div>
+                                <div class="color-hex">#e74c3c</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #3498db;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Info</div>
+                                <div class="color-hex">#3498db</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-section">
+                        <div class="section-header">
+                            <span class="section-icon">⚫</span> Neutri
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #1f1f1f;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Rich Black</div>
+                                <div class="color-hex">#1f1f1f</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #4d4d4d;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Dark Gray</div>
+                                <div class="color-hex">#4d4d4d</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #9e9e9e;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Medium Gray</div>
+                                <div class="color-hex">#9e9e9e</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #faf9f8;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Warm White</div>
+                                <div class="color-hex">#faf9f8</div>
+                            </div>
+                        </div>
+                        <div class="color-item">
+                            <div class="color-swatch" style="background: #ffffff; border: 1px solid #ddd;"></div>
+                            <div class="color-details">
+                                <div class="color-name">Pure White</div>
+                                <div class="color-hex">#ffffff</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>

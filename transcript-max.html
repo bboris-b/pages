@@ -539,49 +539,94 @@
         });
 
         function initializeSpeechRecognition() {
+            console.log('🔍 Checking Speech Recognition support...');
+            
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 recognition = new SpeechRecognition();
+                
+                console.log('✅ Speech Recognition available:', recognition);
                 
                 recognition.continuous = true;
                 recognition.interimResults = true;
                 recognition.lang = document.getElementById('language').value;
                 
+                recognition.onstart = function() {
+                    console.log('🎤 Speech Recognition STARTED');
+                };
+                
                 recognition.onresult = function(event) {
+                    console.log('🗣️ Speech result:', event);
+                    
                     let finalTranscript = '';
+                    let interimTranscript = '';
                     
                     for (let i = event.resultIndex; i < event.results.length; i++) {
                         const transcript = event.results[i][0].transcript;
+                        console.log(`Result ${i}:`, transcript, 'Final:', event.results[i].isFinal);
+                        
                         if (event.results[i].isFinal) {
                             finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
                         }
                     }
                     
                     if (finalTranscript.trim()) {
+                        console.log('✅ Adding to transcript:', finalTranscript);
                         addTranscriptEntry(finalTranscript.trim());
+                    }
+                    
+                    if (interimTranscript.trim()) {
+                        console.log('⏳ Interim result:', interimTranscript);
                     }
                 };
                 
                 recognition.onerror = function(event) {
-                    console.error('Speech recognition error:', event.error);
-                    if (event.error === 'not-allowed') {
-                        alert('❌ Permesso microfono negato. Controlla le impostazioni del browser.');
+                    console.error('❌ Speech recognition error:', event.error, event);
+                    
+                    let errorMsg = '';
+                    switch(event.error) {
+                        case 'not-allowed':
+                            errorMsg = '🔒 Permesso microfono negato. Clicca sull\'icona del lucchetto nella barra degli indirizzi.';
+                            break;
+                        case 'no-speech':
+                            errorMsg = '🔇 Nessun audio rilevato. Prova a parlare più forte.';
+                            break;
+                        case 'audio-capture':
+                            errorMsg = '🎤 Impossibile catturare audio. Controlla che il microfono funzioni.';
+                            break;
+                        case 'network':
+                            errorMsg = '🌐 Errore di rete. Controlla la connessione internet.';
+                            break;
+                        default:
+                            errorMsg = `❌ Errore: ${event.error}`;
                     }
+                    
+                    alert(errorMsg);
                 };
                 
                 recognition.onend = function() {
+                    console.log('🛑 Speech Recognition ENDED');
+                    
                     if (isRecording) {
+                        console.log('🔄 Restarting recognition...');
                         setTimeout(() => {
                             try {
                                 recognition.start();
                             } catch (e) {
-                                console.error('Errore riavvio:', e);
+                                console.error('❌ Errore riavvio:', e);
                             }
                         }, 100);
                     }
                 };
+                
+                // Test immediato se supportato
+                console.log('🧪 Testing Speech Recognition...');
+                
             } else {
-                alert('❌ Speech Recognition non supportato. Usa Chrome o Edge.');
+                console.error('❌ Speech Recognition NOT supported');
+                alert('❌ Speech Recognition non supportato in questo browser.\n\n✅ Usa Chrome, Edge o Safari\n❌ Firefox non supporta questa funzionalità');
             }
         }
 
@@ -592,8 +637,10 @@
         }
 
         async function toggleRecording() {
+            console.log('🎤 Toggle recording clicked', { isRecording, recognition });
+            
             if (!recognition) {
-                alert('❌ Speech Recognition non disponibile.');
+                alert('❌ Speech Recognition non disponibile. Stai usando Chrome o Edge?');
                 return;
             }
 
@@ -602,8 +649,16 @@
 
             try {
                 if (!isRecording) {
-                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                    console.log('🎤 Requesting microphone permission...');
                     
+                    // Test microfono prima
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    console.log('✅ Microfono OK:', stream);
+                    
+                    // Ferma lo stream di test
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    console.log('🎤 Starting speech recognition...');
                     recognition.lang = document.getElementById('language').value;
                     recognition.start();
                     
@@ -611,7 +666,18 @@
                     btn.innerHTML = '🛑 Stop Recording';
                     btn.className = 'btn btn-danger';
                     status.style.display = 'flex';
+                    
+                    console.log('✅ Recording started!');
+                    
+                    // Test messaggio dopo 3 secondi
+                    setTimeout(() => {
+                        if (isRecording && transcript.length === 0) {
+                            alert('💡 Prova a dire qualcosa! Il riconoscimento vocale è attivo.');
+                        }
+                    }, 3000);
+                    
                 } else {
+                    console.log('🛑 Stopping recording...');
                     recognition.stop();
                     isRecording = false;
                     btn.innerHTML = '🎤 Start Recording';
@@ -621,10 +687,22 @@
                     if (transcript.length > 0) {
                         generateSummary();
                     }
+                    
+                    console.log('✅ Recording stopped!');
                 }
             } catch (error) {
-                console.error('Errore microfono:', error);
-                alert('❌ Impossibile accedere al microfono. Controlla i permessi.');
+                console.error('❌ Errore microfono:', error);
+                
+                let errorMsg = '❌ Errore microfono: ';
+                if (error.name === 'NotAllowedError') {
+                    errorMsg += 'Permesso negato. Clicca sull\'icona 🔒 nella barra degli indirizzi e consenti il microfono.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMsg += 'Microfono non trovato. Controlla che sia collegato.';
+                } else {
+                    errorMsg += error.message;
+                }
+                
+                alert(errorMsg);
             }
         }
 

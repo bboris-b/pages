@@ -920,10 +920,10 @@
                     📋 Copy Code
                 </button>
                 <div class="export-buttons">
-                    <button class="export-btn" onclick="event.stopPropagation(); exportGradient(${index}, 'png')">
+                    <button class="export-btn" onclick="event.stopPropagation(); exportGradient(event, ${index}, 'png')">
                         💾 PNG
                     </button>
-                    <button class="export-btn" onclick="event.stopPropagation(); exportGradient(${index}, 'jpeg')">
+                    <button class="export-btn" onclick="event.stopPropagation(); exportGradient(event, ${index}, 'jpeg')">
                         📸 JPEG
                     </button>
                 </div>
@@ -1088,9 +1088,16 @@
         });
 
         // Export gradient as image
-        async function exportGradient(index, format) {
+        async function exportGradient(e, index, format) {
+            console.log('Export called:', index, format);
             const gradient = currentGradients[index];
-            const button = event.target;
+            const button = e.target;
+            
+            if (!gradient) {
+                console.error('Gradient not found at index:', index);
+                alert('Errore: gradiente non trovato');
+                return;
+            }
             
             // Show loading state
             const originalText = button.textContent;
@@ -1099,6 +1106,7 @@
             button.disabled = true;
             
             try {
+                console.log('Creating canvas...');
                 // Create canvas with 1080x1440 dimensions (3:4 ratio)
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
@@ -1109,12 +1117,14 @@
                 let contrastRatio = calculateGradientContrast(gradient);
                 const needsOverlay = contrastRatio < 4.5;
                 
+                console.log('Drawing background...');
                 // Draw background
                 ctx.fillStyle = gradient.background;
                 ctx.fillRect(0, 0, 1080, 1440);
                 
+                console.log('Drawing blobs...');
                 // Draw blurred blobs
-                gradient.blobs.forEach(blob => {
+                gradient.blobs.forEach((blob, i) => {
                     const x = (blob.cx / 100) * 1080;
                     const y = (blob.cy / 100) * 1440;
                     const radius = (blob.r / 100) * 1080 * (gradient.blur / 25); // Scale with blur
@@ -1147,8 +1157,10 @@
                             ctx.fillRect(0, 0, 1080, 1440);
                         }
                     }
+                    console.log(`Blob ${i} drawn at (${x}, ${y})`);
                 });
                 
+                console.log('Adding contrast overlay:', needsOverlay);
                 // Add contrast overlay if needed
                 if (needsOverlay) {
                     const overlayGrad = ctx.createRadialGradient(540, 720, 0, 540, 720, 1200);
@@ -1160,6 +1172,7 @@
                     ctx.fillRect(0, 0, 1080, 1440);
                 }
                 
+                console.log('Creating noise texture...');
                 // Add noise texture
                 const noiseCanvas = document.createElement('canvas');
                 const noiseCtx = noiseCanvas.getContext('2d');
@@ -1178,16 +1191,28 @@
                 }
                 noiseCtx.putImageData(imageData, 0, 0);
                 
+                console.log('Applying noise overlay...');
                 // Composite noise with overlay blend
                 ctx.globalCompositeOperation = 'overlay';
                 ctx.drawImage(noiseCanvas, 0, 0);
                 ctx.globalCompositeOperation = 'source-over';
                 
+                console.log('Converting to blob...');
                 // Convert to blob and download
                 const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
                 const quality = format === 'png' ? undefined : 0.98; // 98% quality for JPEG (near-lossless)
                 
                 canvas.toBlob((blob) => {
+                    if (!blob) {
+                        console.error('Failed to create blob');
+                        alert('Errore nella creazione dell\'immagine');
+                        button.classList.remove('exporting');
+                        button.textContent = originalText;
+                        button.disabled = false;
+                        return;
+                    }
+                    
+                    console.log('Blob created, downloading...');
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -1197,6 +1222,7 @@
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
+                    console.log('Download complete!');
                     // Reset button
                     button.classList.remove('exporting');
                     button.textContent = originalText;

@@ -1115,41 +1115,52 @@
                 ctx.fillRect(0, 0, 1080, 1440);
                 
                 console.log('Drawing blobs...');
-                // Draw blurred blobs
+                // Draw blurred blobs with multiple passes for better blur simulation
                 gradient.blobs.forEach((blob, i) => {
                     const x = (blob.cx / 100) * 1080;
                     const y = (blob.cy / 100) * 1440;
-                    const radius = (blob.r / 100) * 1080 * (gradient.blur / 25); // Scale with blur
                     
-                    // Create radial gradient for blur effect
-                    const radialGrad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                    // Increase radius significantly to simulate blur
+                    // SVG blur spreads the color much more than radial gradient
+                    const baseRadius = (blob.r / 100) * Math.max(1080, 1440);
+                    const blurMultiplier = gradient.blur / 10; // More aggressive blur
+                    const radius = baseRadius * blurMultiplier;
                     
                     // Parse color and apply opacity
                     const color = blob.fill;
+                    let rgb;
+                    
                     const rgbMatch = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
                     if (rgbMatch) {
                         const h = parseInt(rgbMatch[1]);
                         const s = parseInt(rgbMatch[2]);
                         const l = parseInt(rgbMatch[3]);
-                        const rgb = hslToRgb(h, s, l);
-                        const rgbColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${blob.opacity})`;
-                        radialGrad.addColorStop(0, rgbColor);
-                        radialGrad.addColorStop(1, 'transparent');
-                        
-                        ctx.fillStyle = radialGrad;
-                        ctx.fillRect(0, 0, 1080, 1440);
+                        rgb = hslToRgb(h, s, l);
                     } else if (color.startsWith('#')) {
-                        const rgb = hexToRgb(color);
-                        if (rgb) {
-                            const rgbColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${blob.opacity})`;
-                            radialGrad.addColorStop(0, rgbColor);
-                            radialGrad.addColorStop(1, 'transparent');
+                        rgb = hexToRgb(color);
+                    }
+                    
+                    if (rgb) {
+                        // Draw multiple concentric circles with decreasing opacity for softer blur
+                        const layers = 8;
+                        for (let layer = 0; layer < layers; layer++) {
+                            const layerProgress = layer / layers;
+                            const layerRadius = radius * (0.3 + layerProgress * 0.7);
+                            const layerOpacity = blob.opacity * (1 - layerProgress * 0.7);
+                            
+                            const radialGrad = ctx.createRadialGradient(x, y, 0, x, y, layerRadius);
+                            const centerOpacity = layerOpacity * 0.8;
+                            const edgeOpacity = layerOpacity * 0.1;
+                            
+                            radialGrad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${centerOpacity})`);
+                            radialGrad.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${layerOpacity * 0.3})`);
+                            radialGrad.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${edgeOpacity})`);
                             
                             ctx.fillStyle = radialGrad;
                             ctx.fillRect(0, 0, 1080, 1440);
                         }
                     }
-                    console.log(`Blob ${i} drawn at (${x}, ${y})`);
+                    console.log(`Blob ${i} drawn at (${x}, ${y}) with radius ${radius}`);
                 });
                 
                 console.log('Adding contrast overlay:', needsOverlay);

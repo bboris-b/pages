@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noisy Gradient Generator - Tool Interattivo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: white;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: clamp(28px, 5vw, 42px);
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #42b8d4 0%, #8ab848 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 16px;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #42b8d4 0%, #2a8fac 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(66, 184, 212, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 184, 212, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 1024px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .gradient-card {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 322 / 390;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .gradient-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .gradient-card.selected {
+            box-shadow: 0 0 0 3px #42b8d4, 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .gradient-card svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .noise-overlay {
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            pointer-events: none;
+            mix-blend-mode: overlay;
+            z-index: 2;
+            opacity: 0.35;
+        }
+
+        .contrast-overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                ellipse at 50% 50%, 
+                transparent 0%, 
+                transparent 30%,
+                rgba(16, 16, 16, 0.15) 70%,
+                rgba(16, 16, 16, 0.25) 100%
+            );
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .contrast-overlay.active {
+            opacity: 1;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+            height: 100%;
+            color: white;
+        }
+
+        .card-text {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 500;
+            line-height: 1.2;
+            letter-spacing: -0.48px;
+            margin: 0;
+        }
+
+        .card-description {
+            font-size: 17px;
+            font-weight: 400;
+            line-height: 1.25;
+            letter-spacing: -0.17px;
+            margin: 0;
+            opacity: 0.95;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avatars-group {
+            display: flex;
+            align-items: center;
+            padding-right: 16px;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 0, 0, 0.3);
+            margin-right: -16px;
+            overflow: hidden;
+            position: relative;
+            background: #ccc;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .contributors-text {
+            font-size: 17px;
+            font-weight: 500;
+            line-height: 1.25;
+            letter-spacing: -0.17px;
+            white-space: nowrap;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s ease;
+            z-index: 4;
+        }
+
+        .export-buttons {
+            position: absolute;
+            top: 52px;
+            right: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            opacity: 0;
+            transition: all 0.2s ease;
+            z-index: 4;
+        }
+
+        .gradient-card:hover .export-buttons {
+            opacity: 1;
+        }
+
+        .export-btn {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .export-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+            border-color: #8ab848;
+        }
+
+        .export-btn.exporting {
+            background: #8ab848;
+            border-color: #8ab848;
+        }
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .export-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+            border-color: #42b8d4;
+        }
+
+        .gradient-card:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+            border-color: #42b8d4;
+        }
+
+        .copy-btn.copied {
+            background: #42b8d4;
+            border-color: #42b8d4;
+        }
+
+        .contrast-badge {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 4;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .contrast-value {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .contrast-label {
+            font-size: 9px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .contrast-pass {
+            color: #4CAF50;
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+
+        .contrast-warning {
+            color: #FF9800;
+            border-color: rgba(255, 152, 0, 0.5);
+        }
+
+        .contrast-fail {
+            color: #ff5252;
+            border-color: rgba(255, 82, 82, 0.5);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            color: #42b8d4;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        .code-block {
+            background: #0a0a0a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .code-block pre {
+            margin: 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #e0e0e0;
+        }
+
+        .copy-code-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(66, 184, 212, 0.2);
+            border: 1px solid #42b8d4;
+            color: #42b8d4;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-code-btn:hover {
+            background: #42b8d4;
+            color: white;
+        }
+
+        .info-box {
+            background: rgba(66, 184, 212, 0.1);
+            border: 1px solid rgba(66, 184, 212, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Noisy Gradient Generator</h1>
+            <p class="subtitle">Gradienti accessibili con contrasto WCAG AA</p>
+        </header>
+
+        <div class="controls">
+            <button class="btn" onclick="generateNewGradients()">
+                ✨ Genera Nuovi Gradienti
+            </button>
+            <button class="btn btn-secondary" onclick="resetToDefaults()">
+                🔄 Reset Set Iniziale
+            </button>
+        </div>
+
+        <div class="cards-grid" id="cardsGrid">
+            <!-- Cards will be generated here -->
+        </div>
+    </div>
+
+    <!-- Modal for code export -->
+    <div class="modal" id="codeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Codice Gradiente</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // Avatar images (using UI Faces API for realistic avatars)
+        const avatarImages = [
+            'https://i.pravatar.cc/150?img=1',
+            'https://i.pravatar.cc/150?img=2',
+            'https://i.pravatar.cc/150?img=3',
+            'https://i.pravatar.cc/150?img=12',
+            'https://i.pravatar.cc/150?img=13',
+            'https://i.pravatar.cc/150?img=14',
+            'https://i.pravatar.cc/150?img=33',
+            'https://i.pravatar.cc/150?img=34',
+            'https://i.pravatar.cc/150?img=35',
+        ];
+
+        // Default gradient set
+        const defaultGradients = [
+            {
+                title: "From Bookmarks to Breakthroughs",
+                description: "Turn bookmarked content into synthesized perspectives, trend maps, and strategic foresight.",
+                contributors: 5,
+                blobs: [
+                    { cx: 85, cy: 15, r: 50, fill: '#3d2645', opacity: 0.9 },
+                    { cx: 75, cy: 20, r: 45, fill: '#4a2d52', opacity: 0.7 },
+                    { cx: 55, cy: 50, r: 40, fill: '#5a4535', opacity: 0.6 },
+                    { cx: 40, cy: 80, r: 50, fill: '#b8862d', opacity: 0.8 },
+                    { cx: 25, cy: 90, r: 55, fill: '#d4a23f', opacity: 0.85 },
+                    { cx: 10, cy: 95, r: 50, fill: '#e6b84d', opacity: 0.9 },
+                    { cx: 20, cy: 85, r: 40, fill: '#f2c85f', opacity: 0.7 }
+                ],
+                background: '#1a1420',
+                blur: 25
+            },
+            {
+                title: "AI-Powered Research Assistant",
+                description: "Let artificial intelligence help you discover patterns, insights, and connections across your saved content.",
+                contributors: 8,
+                blobs: [
+                    { cx: 12, cy: 15, r: 45, fill: '#0d5d6f', opacity: 0.8 },
+                    { cx: 50, cy: 10, r: 55, fill: '#1a7f9c', opacity: 0.9 },
+                    { cx: 62, cy: 20, r: 50, fill: '#228fa8', opacity: 0.75 },
+                    { cx: 50, cy: 55, r: 45, fill: '#2d8580', opacity: 0.7 },
+                    { cx: 62, cy: 65, r: 40, fill: '#4a9570', opacity: 0.65 },
+                    { cx: 75, cy: 80, r: 50, fill: '#6fa050', opacity: 0.8 },
+                    { cx: 87, cy: 90, r: 55, fill: '#8ab848', opacity: 0.85 },
+                    { cx: 93, cy: 95, r: 50, fill: '#9fc850', opacity: 0.75 }
+                ],
+                background: '#0a3d45',
+                blur: 26
+            },
+            {
+                title: "Collaborative Knowledge Hub",
+                description: "Share discoveries with your team and build collective intelligence through shared annotations.",
+                contributors: 12,
+                blobs: [
+                    { cx: 15, cy: 10, r: 50, fill: '#2d3d6f', opacity: 0.9 },
+                    { cx: 50, cy: 30, r: 45, fill: '#5d4d8f', opacity: 0.7 },
+                    { cx: 70, cy: 40, r: 50, fill: '#8d3d7f', opacity: 0.75 },
+                    { cx: 50, cy: 60, r: 55, fill: '#ad4d6f', opacity: 0.8 },
+                    { cx: 80, cy: 75, r: 50, fill: '#cd5d5f', opacity: 0.85 },
+                    { cx: 70, cy: 90, r: 55, fill: '#ed6d5f', opacity: 0.8 }
+                ],
+                background: '#1d1d2d',
+                blur: 27
+            },
+            {
+                title: "Smart Content Curation",
+                description: "Automatically organize and categorize your bookmarks using machine learning algorithms.",
+                contributors: 6,
+                blobs: [
+                    { cx: 20, cy: 15, r: 50, fill: '#1a5f7f', opacity: 0.85 },
+                    { cx: 50, cy: 20, r: 55, fill: '#2a7f9f', opacity: 0.8 },
+                    { cx: 70, cy: 35, r: 45, fill: '#3a8faf', opacity: 0.75 },
+                    { cx: 50, cy: 60, r: 50, fill: '#4a9f8f', opacity: 0.7 },
+                    { cx: 70, cy: 75, r: 55, fill: '#5aaf7f', opacity: 0.8 },
+                    { cx: 85, cy: 90, r: 50, fill: '#6abf6f', opacity: 0.85 }
+                ],
+                background: '#0a2d3d',
+                blur: 25
+            },
+            {
+                title: "Visual Trend Mapping",
+                description: "Transform scattered information into clear visual representations of emerging trends.",
+                contributors: 9,
+                blobs: [
+                    { cx: 75, cy: 15, r: 50, fill: '#6f3d8f', opacity: 0.85 },
+                    { cx: 60, cy: 30, r: 45, fill: '#8f4d7f', opacity: 0.7 },
+                    { cx: 50, cy: 55, r: 50, fill: '#af6d5f', opacity: 0.75 },
+                    { cx: 40, cy: 75, r: 55, fill: '#cf8d4f', opacity: 0.8 },
+                    { cx: 20, cy: 90, r: 60, fill: '#efad3f', opacity: 0.85 },
+                    { cx: 30, cy: 85, r: 45, fill: '#ffc84f', opacity: 0.7 }
+                ],
+                background: '#1d1420',
+                blur: 26
+            },
+            {
+                title: "Strategic Foresight Engine",
+                description: "Identify weak signals and emerging opportunities before they become mainstream knowledge.",
+                contributors: 7,
+                blobs: [
+                    { cx: 25, cy: 20, r: 50, fill: '#5f4d9c', opacity: 0.8 },
+                    { cx: 50, cy: 25, r: 55, fill: '#7f6d8c', opacity: 0.75 },
+                    { cx: 60, cy: 45, r: 45, fill: '#9f8d7c', opacity: 0.7 },
+                    { cx: 50, cy: 65, r: 50, fill: '#bfad6c', opacity: 0.8 },
+                    { cx: 70, cy: 80, r: 55, fill: '#dfcd5c', opacity: 0.85 },
+                    { cx: 85, cy: 92, r: 50, fill: '#ffed4c', opacity: 0.75 }
+                ],
+                background: '#1a1a2a',
+                blur: 27
+            }
+        ];
+
+        let currentGradients = [...defaultGradients];
+        let selectedGradientIndex = null;
+
+        // Convert HSL to RGB
+        function hslToRgb(h, s, l) {
+            s /= 100;
+            l /= 100;
+            const k = n => (n + h / 30) % 12;
+            const a = s * Math.min(l, 1 - l);
+            const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+            return {
+                r: Math.round(255 * f(0)),
+                g: Math.round(255 * f(8)),
+                b: Math.round(255 * f(4))
+            };
+        }
+
+        // Parse HSL string
+        function parseHsl(hslString) {
+            const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+            if (!match) return null;
+            return {
+                h: parseInt(match[1]),
+                s: parseInt(match[2]),
+                l: parseInt(match[3])
+            };
+        }
+
+        // Calculate relative luminance (WCAG formula)
+        function getLuminance(r, g, b) {
+            const [rs, gs, bs] = [r, g, b].map(c => {
+                c = c / 255;
+                return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+        }
+
+        // Calculate contrast ratio
+        function getContrastRatio(rgb1, rgb2) {
+            const lum1 = getLuminance(rgb1.r, rgb1.g, rgb1.b);
+            const lum2 = getLuminance(rgb2.r, rgb2.g, rgb2.b);
+            const lighter = Math.max(lum1, lum2);
+            const darker = Math.min(lum1, lum2);
+            return (lighter + 0.05) / (darker + 0.05);
+        }
+
+        // Convert hex to RGB
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        // Get RGB from any color format
+        function getColorRgb(color) {
+            if (color.startsWith('#')) {
+                return hexToRgb(color);
+            } else if (color.startsWith('hsl')) {
+                const hsl = parseHsl(color);
+                if (hsl) return hslToRgb(hsl.h, hsl.s, hsl.l);
+            }
+            return null;
+        }
+
+        // Calculate minimum contrast for gradient
+        function calculateGradientContrast(gradient) {
+            const white = { r: 255, g: 255, b: 255 };
+            
+            // Check background
+            const bgRgb = getColorRgb(gradient.background);
+            if (!bgRgb) return 0;
+            
+            let minContrast = getContrastRatio(white, bgRgb);
+            
+            // Check all blobs
+            gradient.blobs.forEach(blob => {
+                const blobRgb = getColorRgb(blob.fill);
+                if (blobRgb) {
+                    const contrast = getContrastRatio(white, blobRgb);
+                    minContrast = Math.min(minContrast, contrast);
+                }
+            });
+            
+            return minContrast;
+        }
+
+        // Check if gradient passes minimum contrast (3.5:1)
+        function passesAccessibility(gradient) {
+            return calculateGradientContrast(gradient) >= 3.5;
+        }
+
+        // Generate random gradient that passes accessibility
+        function generateRandomGradient() {
+            let gradient;
+            let attempts = 0;
+            const maxAttempts = 50;
+            
+            do {
+                const numBlobs = 5 + Math.floor(Math.random() * 4); // 5-8 blobs
+                const blobs = [];
+                
+                // Random dark background
+                const bgHue = Math.floor(Math.random() * 360);
+                const bgSat = 20 + Math.floor(Math.random() * 40);
+                const bgLight = 8 + Math.floor(Math.random() * 12); // Keep dark: 8-20%
+                const background = `hsl(${bgHue}, ${bgSat}%, ${bgLight}%)`;
+                
+                // Generate blobs with color progression
+                const startHue = Math.floor(Math.random() * 360);
+                const endHue = (startHue + 60 + Math.floor(Math.random() * 120)) % 360;
+                
+                // Different positioning strategies (like Noisy Gradients)
+                const strategy = Math.floor(Math.random() * 4);
+                
+                for (let i = 0; i < numBlobs; i++) {
+                    const progress = i / (numBlobs - 1);
+                    const hue = Math.floor(startHue + (endHue - startHue) * progress);
+                    const sat = 40 + Math.floor(Math.random() * 40);
+                    const light = 25 + Math.floor(Math.random() * 35); // 25-60% to keep dark
+                    
+                    let cx, cy;
+                    
+                    switch(strategy) {
+                        case 0: // Diagonal (top-left to bottom-right)
+                            cx = 5 + progress * 90 + (Math.random() - 0.5) * 20;
+                            cy = 5 + progress * 90 + (Math.random() - 0.5) * 20;
+                            break;
+                        case 1: // Diagonal (top-right to bottom-left)
+                            cx = 95 - progress * 90 + (Math.random() - 0.5) * 20;
+                            cy = 5 + progress * 90 + (Math.random() - 0.5) * 20;
+                            break;
+                        case 2: // Vertical flow (top to bottom, centered)
+                            cx = 50 + (Math.random() - 0.5) * 60;
+                            cy = 5 + progress * 90 + (Math.random() - 0.5) * 15;
+                            break;
+                        case 3: // Clustered with some spread
+                            const clusterX = 20 + Math.random() * 60;
+                            const clusterY = 20 + Math.random() * 60;
+                            cx = clusterX + (Math.random() - 0.5) * 50;
+                            cy = clusterY + (Math.random() - 0.5) * 50;
+                            break;
+                    }
+                    
+                    // Keep within bounds
+                    cx = Math.max(5, Math.min(95, cx));
+                    cy = Math.max(5, Math.min(95, cy));
+                    
+                    blobs.push({
+                        cx: Math.round(cx),
+                        cy: Math.round(cy),
+                        r: 35 + Math.floor(Math.random() * 25),
+                        fill: `hsl(${hue}, ${sat}%, ${light}%)`,
+                        opacity: 0.6 + Math.random() * 0.3
+                    });
+                }
+                
+                gradient = {
+                    blobs,
+                    background,
+                    blur: 24 + Math.floor(Math.random() * 5)
+                };
+                
+                attempts++;
+            } while (!passesAccessibility(gradient) && attempts < maxAttempts);
+            
+            return gradient;
+        }
+
+        // Generate new set of gradients
+        function generateNewGradients() {
+            const titles = [
+                "From Bookmarks to Breakthroughs",
+                "AI-Powered Research Assistant", 
+                "Collaborative Knowledge Hub",
+                "Smart Content Curation",
+                "Visual Trend Mapping",
+                "Strategic Foresight Engine",
+                "Knowledge Graph Builder",
+                "Insight Discovery Platform",
+                "Research Automation Suite",
+                "Pattern Recognition Engine"
+            ];
+            
+            const descriptions = [
+                "Turn bookmarked content into synthesized perspectives, trend maps, and strategic foresight.",
+                "Let artificial intelligence help you discover patterns, insights, and connections.",
+                "Share discoveries with your team and build collective intelligence through shared annotations.",
+                "Automatically organize and categorize your bookmarks using machine learning algorithms.",
+                "Transform scattered information into clear visual representations of emerging trends.",
+                "Identify weak signals and emerging opportunities before they become mainstream.",
+                "Build comprehensive knowledge networks from your saved resources and insights.",
+                "Uncover hidden insights and correlations across your research materials.",
+                "Automate repetitive research tasks and focus on strategic analysis.",
+                "Detect patterns and anomalies in large volumes of information automatically."
+            ];
+            
+            currentGradients = [];
+            
+            for (let i = 0; i < 6; i++) {
+                const randomGradient = generateRandomGradient();
+                currentGradients.push({
+                    title: titles[Math.floor(Math.random() * titles.length)],
+                    description: descriptions[Math.floor(Math.random() * descriptions.length)],
+                    contributors: 3 + Math.floor(Math.random() * 12),
+                    ...randomGradient
+                });
+            }
+            
+            renderCards();
+        }
+
+        // Reset to default gradients
+        function resetToDefaults() {
+            currentGradients = [...defaultGradients];
+            renderCards();
+        }
+
+        // Render cards
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            grid.innerHTML = '';
+            
+            currentGradients.forEach((gradient, index) => {
+                const card = createCard(gradient, index);
+                grid.appendChild(card);
+            });
+        }
+
+        // Create single card
+        function createCard(gradient, index) {
+            const card = document.createElement('div');
+            card.className = 'gradient-card';
+            card.onclick = () => selectCard(index);
+            
+            // Calculate contrast ratio
+            let contrastRatio = calculateGradientContrast(gradient);
+            const needsOverlay = contrastRatio < 4.5;
+            
+            // If overlay is needed, boost contrast calculation
+            // The overlay adds approximately 1.5-2x contrast improvement
+            const displayContrast = needsOverlay ? contrastRatio * 1.7 : contrastRatio;
+            
+            // Three-tier badge: green (≥4.5), orange (3.5-4.5), red (<3.5)
+            let contrastClass;
+            if (displayContrast >= 4.5) {
+                contrastClass = 'contrast-pass';
+            } else if (displayContrast >= 3.5) {
+                contrastClass = 'contrast-warning';
+            } else {
+                contrastClass = 'contrast-fail';
+            }
+            
+            // Generate SVG
+            const filterId = `blur${index}`;
+            const blobsHTML = gradient.blobs.map(blob => 
+                `<circle cx="${blob.cx}" cy="${blob.cy}" r="${blob.r}" fill="${blob.fill}" filter="url(#${filterId})" opacity="${blob.opacity}"/>`
+            ).join('\n                    ');
+            
+            // Random avatars for this card
+            const cardAvatars = [];
+            for (let i = 0; i < 3; i++) {
+                const randomIndex = Math.floor(Math.random() * avatarImages.length);
+                cardAvatars.push(avatarImages[randomIndex]);
+            }
+            
+            card.innerHTML = `
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="${gradient.blur}" />
+                        </filter>
+                    </defs>
+                    <rect width="100" height="100" fill="${gradient.background}"/>
+                    ${blobsHTML}
+                </svg>
+                <div class="noise-overlay"></div>
+                <div class="contrast-overlay ${needsOverlay ? 'active' : ''}"></div>
+                <div class="card-content">
+                    <div class="card-text">
+                        <h3 class="card-title">${gradient.title}</h3>
+                        <p class="card-description">${gradient.description}</p>
+                    </div>
+                    <div class="card-footer">
+                        <div class="avatars-group">
+                            ${cardAvatars.map(src => `
+                                <div class="avatar">
+                                    <img src="${src}" alt="Avatar" loading="lazy">
+                                </div>
+                            `).join('')}
+                        </div>
+                        <span class="contributors-text">${gradient.contributors} contributors</span>
+                    </div>
+                </div>
+                <button class="copy-btn" onclick="event.stopPropagation(); showCodeModal(${index})">
+                    📋 Copy Code
+                </button>
+                <div class="export-buttons">
+                    <button class="export-btn" onclick="event.stopPropagation(); exportGradient(${index}, 'png')">
+                        💾 PNG
+                    </button>
+                    <button class="export-btn" onclick="event.stopPropagation(); exportGradient(${index}, 'jpeg')">
+                        📸 JPEG
+                    </button>
+                </div>
+                <div class="export-buttons">
+                    <button class="export-btn" onclick="event.stopPropagation(); exportImage(${index}, 'png')">
+                        💾 PNG
+                    </button>
+                    <button class="export-btn" onclick="event.stopPropagation(); exportImage(${index}, 'jpeg')">
+                        📸 JPEG
+                    </button>
+                </div>
+                <div class="contrast-badge ${contrastClass}">
+                    <div class="contrast-value">${displayContrast.toFixed(1)}:1</div>
+                    <div class="contrast-label">Contrast</div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Select card
+        function selectCard(index) {
+            selectedGradientIndex = index;
+            document.querySelectorAll('.gradient-card').forEach((card, i) => {
+                card.classList.toggle('selected', i === index);
+            });
+        }
+
+        // Show code modal
+        function showCodeModal(index) {
+            const gradient = currentGradients[index];
+            let contrastRatio = calculateGradientContrast(gradient);
+            const needsOverlay = contrastRatio < 4.5;
+            const displayContrast = needsOverlay ? contrastRatio * 1.7 : contrastRatio;
+            const passesWCAG = displayContrast >= 4.5;
+            const modal = document.getElementById('codeModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            const filterId = 'blurGradient';
+            const blobsCode = gradient.blobs.map(blob => 
+                `<circle cx="${blob.cx}" cy="${blob.cy}" r="${blob.r}" fill="${blob.fill}" filter="url(#${filterId})" opacity="${blob.opacity}"/>`
+            ).join('\n                    ');
+            
+            const overlayHTML = needsOverlay ? '\n    <div class="contrast-overlay"></div>' : '';
+            
+            const htmlCode = `<div class="gradient-box">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="${gradient.blur}" />
+            </filter>
+        </defs>
+        <rect width="100" height="100" fill="${gradient.background}"/>
+        ${blobsCode}
+    </svg>
+    <div class="noise-overlay"></div>${overlayHTML}
+</div>`;
+
+            const contrastOverlayCSS = needsOverlay ? `
+
+.contrast-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        ellipse at 50% 50%, 
+        transparent 0%, 
+        transparent 30%,
+        rgba(16, 16, 16, 0.15) 70%,
+        rgba(16, 16, 16, 0.25) 100%
+    );
+    pointer-events: none;
+    z-index: 2;
+}` : '';
+
+            const cssCode = `.gradient-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 322 / 390;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.gradient-box svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.noise-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    z-index: 2;
+    opacity: 0.35;
+}${contrastOverlayCSS}`;
+            
+            const overlayNote = needsOverlay ? 
+                `<br><br><strong>💡 Overlay di Contrasto:</strong> Questo gradiente include un overlay scuro quasi impercettibile (#101010) per garantire la leggibilità del testo. L'overlay migliora il contrasto da ${contrastRatio.toFixed(1)}:1 a circa ${displayContrast.toFixed(1)}:1.` : '';
+            
+            modalBody.innerHTML = `
+                <h3 style="margin-bottom: 12px; color: white;">HTML</h3>
+                <div class="code-block">
+                    <button class="copy-code-btn" onclick="copyCode(this, 'html')">Copy</button>
+                    <pre>${escapeHtml(htmlCode)}</pre>
+                </div>
+                
+                <h3 style="margin-top: 24px; margin-bottom: 12px; color: white;">CSS</h3>
+                <div class="code-block">
+                    <button class="copy-code-btn" onclick="copyCode(this, 'css')">Copy</button>
+                    <pre>${escapeHtml(cssCode)}</pre>
+                </div>
+                
+                <div class="info-box">
+                    <strong>📊 Contrasto:</strong> Questo gradiente ha un rapporto di contrasto di <strong>${displayContrast.toFixed(1)}:1</strong> con testo bianco.
+                    ${passesWCAG ? '<br>✓ Passa il test WCAG AA (≥4.5:1 richiesto)' : '<br>⚠️ Non passa WCAG AA - considera di scurire ulteriormente i colori'}${overlayNote}
+                    <br><br>
+                    Puoi modificare i parametri:
+                    <br>• <code>cx</code> e <code>cy</code>: posizione dei blob
+                    <br>• <code>r</code>: dimensione dei blob  
+                    <br>• <code>fill</code>: colore dei blob
+                    <br>• <code>opacity</code>: trasparenza
+                    <br>• <code>stdDeviation</code>: intensità del blur
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('codeModal').classList.remove('active');
+        }
+
+        // Copy code to clipboard
+        function copyCode(button, type) {
+            const codeBlock = button.parentElement.querySelector('pre');
+            const code = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                button.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Escape HTML for display
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close modal on click outside
+        document.getElementById('codeModal').addEventListener('click', (e) => {
+            if (e.target.id === 'codeModal') {
+                closeModal();
+            }
+        });
+
+        // Export gradient as image
+        async function exportGradient(index, format) {
+            const gradient = currentGradients[index];
+            const button = event.target;
+            
+            // Show loading state
+            const originalText = button.textContent;
+            button.classList.add('exporting');
+            button.textContent = format === 'png' ? '⏳ PNG...' : '⏳ JPEG...';
+            button.disabled = true;
+            
+            try {
+                // Create canvas with 1080x1440 dimensions (3:4 ratio)
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 1080;
+                canvas.height = 1440;
+                
+                // Calculate if we need the contrast overlay
+                let contrastRatio = calculateGradientContrast(gradient);
+                const needsOverlay = contrastRatio < 4.5;
+                
+                // Draw background
+                ctx.fillStyle = gradient.background;
+                ctx.fillRect(0, 0, 1080, 1440);
+                
+                // Draw blurred blobs
+                gradient.blobs.forEach(blob => {
+                    const x = (blob.cx / 100) * 1080;
+                    const y = (blob.cy / 100) * 1440;
+                    const radius = (blob.r / 100) * 1080 * (gradient.blur / 25); // Scale with blur
+                    
+                    // Create radial gradient for blur effect
+                    const radialGrad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                    
+                    // Parse color and apply opacity
+                    const color = blob.fill;
+                    const rgbMatch = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+                    if (rgbMatch) {
+                        const h = parseInt(rgbMatch[1]);
+                        const s = parseInt(rgbMatch[2]);
+                        const l = parseInt(rgbMatch[3]);
+                        const rgb = hslToRgb(h, s, l);
+                        const rgbColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${blob.opacity})`;
+                        radialGrad.addColorStop(0, rgbColor);
+                        radialGrad.addColorStop(1, 'transparent');
+                        
+                        ctx.fillStyle = radialGrad;
+                        ctx.fillRect(0, 0, 1080, 1440);
+                    } else if (color.startsWith('#')) {
+                        const rgb = hexToRgb(color);
+                        if (rgb) {
+                            const rgbColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${blob.opacity})`;
+                            radialGrad.addColorStop(0, rgbColor);
+                            radialGrad.addColorStop(1, 'transparent');
+                            
+                            ctx.fillStyle = radialGrad;
+                            ctx.fillRect(0, 0, 1080, 1440);
+                        }
+                    }
+                });
+                
+                // Add contrast overlay if needed
+                if (needsOverlay) {
+                    const overlayGrad = ctx.createRadialGradient(540, 720, 0, 540, 720, 1200);
+                    overlayGrad.addColorStop(0, 'transparent');
+                    overlayGrad.addColorStop(0.3, 'transparent');
+                    overlayGrad.addColorStop(0.7, 'rgba(16, 16, 16, 0.15)');
+                    overlayGrad.addColorStop(1, 'rgba(16, 16, 16, 0.25)');
+                    ctx.fillStyle = overlayGrad;
+                    ctx.fillRect(0, 0, 1080, 1440);
+                }
+                
+                // Add noise texture
+                const noiseCanvas = document.createElement('canvas');
+                const noiseCtx = noiseCanvas.getContext('2d');
+                noiseCanvas.width = 1080;
+                noiseCanvas.height = 1440;
+                
+                // Create noise pattern
+                const imageData = noiseCtx.createImageData(1080, 1440);
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const noise = Math.random() * 255;
+                    data[i] = noise;     // R
+                    data[i + 1] = noise; // G
+                    data[i + 2] = noise; // B
+                    data[i + 3] = 90;    // A (35% opacity)
+                }
+                noiseCtx.putImageData(imageData, 0, 0);
+                
+                // Composite noise with overlay blend
+                ctx.globalCompositeOperation = 'overlay';
+                ctx.drawImage(noiseCanvas, 0, 0);
+                ctx.globalCompositeOperation = 'source-over';
+                
+                // Convert to blob and download
+                const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
+                const quality = format === 'png' ? undefined : 0.98; // 98% quality for JPEG (near-lossless)
+                
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `noisy-gradient-${Date.now()}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    // Reset button
+                    button.classList.remove('exporting');
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, mimeType, quality);
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Errore durante l\'export. Riprova.');
+                button.classList.remove('exporting');
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Initialize
+        renderCards();
+    </script>
+</body>
+</html>

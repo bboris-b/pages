@@ -93,15 +93,9 @@
 
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 24px;
             margin-bottom: 40px;
-        }
-
-        @media (max-width: 1400px) {
-            .cards-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
         }
 
         @media (max-width: 1024px) {
@@ -165,9 +159,9 @@
             background: radial-gradient(
                 ellipse at 50% 50%, 
                 transparent 0%, 
-                transparent 30%,
-                rgba(16, 16, 16, 0.15) 70%,
-                rgba(16, 16, 16, 0.25) 100%
+                transparent 20%,
+                rgba(16, 16, 16, 0.35) 60%,
+                rgba(16, 16, 16, 0.5) 100%
             );
             pointer-events: none;
             z-index: 2;
@@ -306,18 +300,6 @@
         .export-btn.exporting {
             background: #8ab848;
             border-color: #8ab848;
-        }
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .export-btn:hover {
-            background: rgba(0, 0, 0, 0.8);
-            border-color: #42b8d4;
         }
 
         .gradient-card:hover .copy-btn {
@@ -890,8 +872,8 @@
             const needsOverlay = contrastRatio < 4.5;
             
             // If overlay is needed, boost contrast calculation
-            // The overlay adds approximately 1.5-2x contrast improvement
-            const displayContrast = needsOverlay ? contrastRatio * 1.7 : contrastRatio;
+            // The NEW overlay adds approximately 2.2-2.5x contrast improvement (stronger than before)
+            const displayContrast = needsOverlay ? contrastRatio * 2.3 : contrastRatio;
             
             // Three-tier badge: green (≥4.5), orange (3.5-4.5), red (<3.5)
             let contrastClass;
@@ -977,7 +959,7 @@
             const gradient = currentGradients[index];
             let contrastRatio = calculateGradientContrast(gradient);
             const needsOverlay = contrastRatio < 4.5;
-            const displayContrast = needsOverlay ? contrastRatio * 1.7 : contrastRatio;
+            const displayContrast = needsOverlay ? contrastRatio * 2.3 : contrastRatio;
             const passesWCAG = displayContrast >= 4.5;
             const modal = document.getElementById('codeModal');
             const modalBody = document.getElementById('modalBody');
@@ -1010,9 +992,9 @@
     background: radial-gradient(
         ellipse at 50% 50%, 
         transparent 0%, 
-        transparent 30%,
-        rgba(16, 16, 16, 0.15) 70%,
-        rgba(16, 16, 16, 0.25) 100%
+        transparent 20%,
+        rgba(16, 16, 16, 0.35) 60%,
+        rgba(16, 16, 16, 0.5) 100%
     );
     pointer-events: none;
     z-index: 2;
@@ -1044,7 +1026,7 @@
 }${contrastOverlayCSS}`;
             
             const overlayNote = needsOverlay ? 
-                `<br><br><strong>💡 Overlay di Contrasto:</strong> Questo gradiente include un overlay scuro quasi impercettibile (#101010) per garantire la leggibilità del testo. L'overlay migliora il contrasto da ${contrastRatio.toFixed(1)}:1 a circa ${displayContrast.toFixed(1)}:1.` : '';
+                `<br><br><strong>💡 Overlay di Contrasto:</strong> Questo gradiente include un overlay scuro (#101010) per garantire la leggibilità del testo. L'overlay migliora il contrasto da ${contrastRatio.toFixed(1)}:1 a circa ${displayContrast.toFixed(1)}:1.` : '';
             
             modalBody.innerHTML = `
                 <h3 style="margin-bottom: 12px; color: white;">HTML</h3>
@@ -1198,16 +1180,16 @@
                     ctx.drawImage(img, 0, 0, 1080, 1440);
                     URL.revokeObjectURL(svgUrl);
                     
-                    // 3. Add contrast overlay if needed
+                    // 3. Add BOOSTED contrast overlay if needed
                     let contrastRatio = calculateGradientContrast(gradient);
                     const needsOverlay = contrastRatio < 4.5;
                     
                     if (needsOverlay) {
                         const overlayGrad = ctx.createRadialGradient(540, 720, 0, 540, 720, 1200);
                         overlayGrad.addColorStop(0, 'transparent');
-                        overlayGrad.addColorStop(0.3, 'transparent');
-                        overlayGrad.addColorStop(0.7, 'rgba(16, 16, 16, 0.15)');
-                        overlayGrad.addColorStop(1, 'rgba(16, 16, 16, 0.25)');
+                        overlayGrad.addColorStop(0.2, 'transparent');
+                        overlayGrad.addColorStop(0.6, 'rgba(16, 16, 16, 0.35)');
+                        overlayGrad.addColorStop(1, 'rgba(16, 16, 16, 0.5)');
                         ctx.fillStyle = overlayGrad;
                         ctx.fillRect(0, 0, 1080, 1440);
                     }

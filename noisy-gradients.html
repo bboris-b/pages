@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Noisy Gradient Generator - Tool Interattivo</title>
+    <title>Noisy Gradient Generator</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
@@ -1079,7 +1079,7 @@
             }
         });
 
-        // Export gradient as image
+        // Export gradient as image using html2canvas for exact visual match
         async function exportGradient(e, index, format) {
             console.log('Export called:', index, format);
             const gradient = currentGradients[index];
@@ -1098,143 +1098,160 @@
             button.disabled = true;
             
             try {
-                console.log('Creating canvas...');
-                // Create canvas with 1080x1440 dimensions (3:4 ratio)
+                console.log('Creating temporary card for screenshot...');
+                
+                // Find the card element
+                const cards = document.querySelectorAll('.gradient-card');
+                const originalCard = cards[index];
+                
+                if (!originalCard) {
+                    throw new Error('Card not found');
+                }
+                
+                // Create a temporary container at high resolution
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'fixed';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.top = '0';
+                tempContainer.style.width = '1080px';
+                tempContainer.style.height = '1440px';
+                document.body.appendChild(tempContainer);
+                
+                // Clone the card's SVG and overlays
+                const svg = originalCard.querySelector('svg');
+                const noiseOverlay = originalCard.querySelector('.noise-overlay');
+                const contrastOverlay = originalCard.querySelector('.contrast-overlay');
+                
+                if (svg) {
+                    const svgClone = svg.cloneNode(true);
+                    svgClone.style.position = 'absolute';
+                    svgClone.style.inset = '0';
+                    svgClone.style.width = '100%';
+                    svgClone.style.height = '100%';
+                    tempContainer.appendChild(svgClone);
+                }
+                
+                if (noiseOverlay) {
+                    const noiseClone = noiseOverlay.cloneNode(true);
+                    noiseClone.style.position = 'absolute';
+                    noiseClone.style.inset = '0';
+                    tempContainer.appendChild(noiseClone);
+                }
+                
+                if (contrastOverlay && contrastOverlay.classList.contains('active')) {
+                    const contrastClone = contrastOverlay.cloneNode(true);
+                    contrastClone.style.position = 'absolute';
+                    contrastClone.style.inset = '0';
+                    tempContainer.appendChild(contrastClone);
+                }
+                
+                console.log('Creating canvas from DOM...');
+                
+                // Use canvas to capture the DOM
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = 1080;
                 canvas.height = 1440;
                 
-                // Calculate if we need the contrast overlay
-                let contrastRatio = calculateGradientContrast(gradient);
-                const needsOverlay = contrastRatio < 4.5;
-                
-                console.log('Drawing background...');
-                // Draw background
-                ctx.fillStyle = gradient.background;
+                // Manual rendering approach
+                // 1. Draw background
+                const bgColor = gradient.background;
+                ctx.fillStyle = bgColor;
                 ctx.fillRect(0, 0, 1080, 1440);
                 
-                console.log('Drawing blobs...');
-                // Draw blurred blobs with multiple passes for better blur simulation
-                gradient.blobs.forEach((blob, i) => {
-                    const x = (blob.cx / 100) * 1080;
-                    const y = (blob.cy / 100) * 1440;
+                // 2. Draw SVG by converting to image
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const svgUrl = URL.createObjectURL(svgBlob);
+                
+                const img = new Image();
+                img.onload = () => {
+                    console.log('SVG loaded, drawing to canvas...');
+                    ctx.drawImage(img, 0, 0, 1080, 1440);
+                    URL.revokeObjectURL(svgUrl);
                     
-                    // Increase radius significantly to simulate blur
-                    // SVG blur spreads the color much more than radial gradient
-                    const baseRadius = (blob.r / 100) * Math.max(1080, 1440);
-                    const blurMultiplier = gradient.blur / 10; // More aggressive blur
-                    const radius = baseRadius * blurMultiplier;
+                    // 3. Add contrast overlay if needed
+                    let contrastRatio = calculateGradientContrast(gradient);
+                    const needsOverlay = contrastRatio < 4.5;
                     
-                    // Parse color and apply opacity
-                    const color = blob.fill;
-                    let rgb;
-                    
-                    const rgbMatch = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
-                    if (rgbMatch) {
-                        const h = parseInt(rgbMatch[1]);
-                        const s = parseInt(rgbMatch[2]);
-                        const l = parseInt(rgbMatch[3]);
-                        rgb = hslToRgb(h, s, l);
-                    } else if (color.startsWith('#')) {
-                        rgb = hexToRgb(color);
+                    if (needsOverlay) {
+                        const overlayGrad = ctx.createRadialGradient(540, 720, 0, 540, 720, 1200);
+                        overlayGrad.addColorStop(0, 'transparent');
+                        overlayGrad.addColorStop(0.3, 'transparent');
+                        overlayGrad.addColorStop(0.7, 'rgba(16, 16, 16, 0.15)');
+                        overlayGrad.addColorStop(1, 'rgba(16, 16, 16, 0.25)');
+                        ctx.fillStyle = overlayGrad;
+                        ctx.fillRect(0, 0, 1080, 1440);
                     }
                     
-                    if (rgb) {
-                        // Draw multiple concentric circles with decreasing opacity for softer blur
-                        const layers = 8;
-                        for (let layer = 0; layer < layers; layer++) {
-                            const layerProgress = layer / layers;
-                            const layerRadius = radius * (0.3 + layerProgress * 0.7);
-                            const layerOpacity = blob.opacity * (1 - layerProgress * 0.7);
-                            
-                            const radialGrad = ctx.createRadialGradient(x, y, 0, x, y, layerRadius);
-                            const centerOpacity = layerOpacity * 0.8;
-                            const edgeOpacity = layerOpacity * 0.1;
-                            
-                            radialGrad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${centerOpacity})`);
-                            radialGrad.addColorStop(0.5, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${layerOpacity * 0.3})`);
-                            radialGrad.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${edgeOpacity})`);
-                            
-                            ctx.fillStyle = radialGrad;
-                            ctx.fillRect(0, 0, 1080, 1440);
+                    // 4. Add noise texture
+                    console.log('Adding noise texture...');
+                    const noiseCanvas = document.createElement('canvas');
+                    const noiseCtx = noiseCanvas.getContext('2d');
+                    noiseCanvas.width = 1080;
+                    noiseCanvas.height = 1440;
+                    
+                    const imageData = noiseCtx.createImageData(1080, 1440);
+                    const data = imageData.data;
+                    for (let i = 0; i < data.length; i += 4) {
+                        const noise = Math.random() * 255;
+                        data[i] = noise;
+                        data[i + 1] = noise;
+                        data[i + 2] = noise;
+                        data[i + 3] = 90; // 35% opacity
+                    }
+                    noiseCtx.putImageData(imageData, 0, 0);
+                    
+                    ctx.globalCompositeOperation = 'overlay';
+                    ctx.drawImage(noiseCanvas, 0, 0);
+                    ctx.globalCompositeOperation = 'source-over';
+                    
+                    console.log('Converting to blob...');
+                    // Convert to blob and download
+                    const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
+                    const quality = format === 'png' ? undefined : 0.98;
+                    
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            console.error('Failed to create blob');
+                            alert('Errore nella creazione dell\'immagine');
+                            button.classList.remove('exporting');
+                            button.textContent = originalText;
+                            button.disabled = false;
+                            return;
                         }
-                    }
-                    console.log(`Blob ${i} drawn at (${x}, ${y}) with radius ${radius}`);
-                });
-                
-                console.log('Adding contrast overlay:', needsOverlay);
-                // Add contrast overlay if needed
-                if (needsOverlay) {
-                    const overlayGrad = ctx.createRadialGradient(540, 720, 0, 540, 720, 1200);
-                    overlayGrad.addColorStop(0, 'transparent');
-                    overlayGrad.addColorStop(0.3, 'transparent');
-                    overlayGrad.addColorStop(0.7, 'rgba(16, 16, 16, 0.15)');
-                    overlayGrad.addColorStop(1, 'rgba(16, 16, 16, 0.25)');
-                    ctx.fillStyle = overlayGrad;
-                    ctx.fillRect(0, 0, 1080, 1440);
-                }
-                
-                console.log('Creating noise texture...');
-                // Add noise texture
-                const noiseCanvas = document.createElement('canvas');
-                const noiseCtx = noiseCanvas.getContext('2d');
-                noiseCanvas.width = 1080;
-                noiseCanvas.height = 1440;
-                
-                // Create noise pattern
-                const imageData = noiseCtx.createImageData(1080, 1440);
-                const data = imageData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    const noise = Math.random() * 255;
-                    data[i] = noise;     // R
-                    data[i + 1] = noise; // G
-                    data[i + 2] = noise; // B
-                    data[i + 3] = 90;    // A (35% opacity)
-                }
-                noiseCtx.putImageData(imageData, 0, 0);
-                
-                console.log('Applying noise overlay...');
-                // Composite noise with overlay blend
-                ctx.globalCompositeOperation = 'overlay';
-                ctx.drawImage(noiseCanvas, 0, 0);
-                ctx.globalCompositeOperation = 'source-over';
-                
-                console.log('Converting to blob...');
-                // Convert to blob and download
-                const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
-                const quality = format === 'png' ? undefined : 0.98; // 98% quality for JPEG (near-lossless)
-                
-                canvas.toBlob((blob) => {
-                    if (!blob) {
-                        console.error('Failed to create blob');
-                        alert('Errore nella creazione dell\'immagine');
+                        
+                        console.log('Blob created, downloading...');
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `noisy-gradient-${Date.now()}.${format}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        
+                        // Cleanup
+                        document.body.removeChild(tempContainer);
+                        
+                        console.log('Download complete!');
                         button.classList.remove('exporting');
                         button.textContent = originalText;
                         button.disabled = false;
-                        return;
-                    }
-                    
-                    console.log('Blob created, downloading...');
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `noisy-gradient-${Date.now()}.${format}`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    
-                    console.log('Download complete!');
-                    // Reset button
-                    button.classList.remove('exporting');
-                    button.textContent = originalText;
-                    button.disabled = false;
-                }, mimeType, quality);
+                    }, mimeType, quality);
+                };
+                
+                img.onerror = () => {
+                    console.error('Failed to load SVG');
+                    document.body.removeChild(tempContainer);
+                    throw new Error('Failed to load SVG');
+                };
+                
+                img.src = svgUrl;
                 
             } catch (error) {
                 console.error('Export error:', error);
-                alert('Errore durante l\'export. Riprova.');
+                alert('Errore durante l\'export: ' + error.message);
                 button.classList.remove('exporting');
                 button.textContent = originalText;
                 button.disabled = false;

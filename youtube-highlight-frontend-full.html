@@ -479,11 +479,16 @@
             startTimeValue.textContent = e.target.value + 's';
         });
 
-        // Load FFmpeg
+        // Load FFmpeg with multiple fallback CDNs
         async function loadFFmpeg() {
             if (ffmpegLoaded) return;
             
             try {
+                // Check if FFmpeg loaded from CDN
+                if (typeof FFmpegWASM === 'undefined' || typeof FFmpegUtil === 'undefined') {
+                    throw new Error('FFmpeg librerie non caricate. Ricarica la pagina e riprova.');
+                }
+
                 const { FFmpeg } = FFmpegWASM;
                 const { toBlobURL } = FFmpegUtil;
                 
@@ -499,17 +504,28 @@
 
                 updateProgress(0, 'Caricamento librerie...');
 
-                const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.4/dist/umd';
-                await ffmpeg.load({
-                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-                });
+                // Try primary CDN
+                try {
+                    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+                    await ffmpeg.load({
+                        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                    });
+                } catch (e) {
+                    console.log('Primary CDN failed, trying jsdelivr...');
+                    // Fallback to jsdelivr
+                    const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+                    await ffmpeg.load({
+                        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                    });
+                }
                 
                 ffmpegLoaded = true;
-                console.log('FFmpeg caricato');
+                console.log('FFmpeg caricato con successo');
             } catch (error) {
                 console.error('Errore caricamento FFmpeg:', error);
-                throw new Error('Errore nel caricamento delle librerie');
+                throw new Error(`Impossibile caricare FFmpeg: ${error.message}. Prova a ricaricare la pagina o usa un browser diverso (Chrome/Edge consigliati).`);
             }
         }
 
@@ -615,7 +631,7 @@
                 console.error('Errore:', error);
                 hideProgress();
                 processBtn.disabled = false;
-                showMessage('❌ Errore: ' + error.message, 'error');
+                showMessage('❌ ' + error.message, 'error');
             }
         }
 
@@ -631,7 +647,7 @@
         }
 
         function showMessage(text, type = 'error') {
-            messageDiv.textContent = text;
+            messageDiv.innerHTML = text;
             messageDiv.className = `message ${type}`;
             messageDiv.style.display = 'block';
         }
@@ -653,6 +669,13 @@
             document.getElementById('progress-fill').style.width = percent + '%';
             document.getElementById('progress-text').textContent = `${message} ${percent}%`;
         }
+
+        // Check if FFmpeg loaded on page load
+        window.addEventListener('load', () => {
+            if (typeof FFmpegWASM === 'undefined' || typeof FFmpegUtil === 'undefined') {
+                showMessage('⚠️ Errore nel caricamento delle librerie. Ricarica la pagina. Se il problema persiste, usa Chrome o Edge.', 'error');
+            }
+        });
     </script>
 </body>
 </html>

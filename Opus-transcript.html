@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trascrittore Audio OPUS - Gratuito</title>
+    <title>Trascrittore Audio OPUS - Qualità Migliorata</title>
     <style>
         * {
             margin: 0;
@@ -55,6 +55,36 @@
         .info-box strong {
             display: block;
             margin-bottom: 5px;
+        }
+
+        .model-selector {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .model-selector label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #856404;
+        }
+
+        .model-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .model-info {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #856404;
         }
 
         .loading-section {
@@ -278,13 +308,25 @@
 
         <div class="info-box">
             <strong>✨ Completamente gratuito e privato!</strong>
-            Al primo utilizzo scaricherà il modello Whisper (~40MB). Tutto funziona localmente nel tuo browser, nessun dato viene inviato online.
+            Al primo utilizzo scaricherà il modello Whisper. Tutto funziona localmente nel tuo browser, nessun dato viene inviato online.
+        </div>
+
+        <div class="model-selector">
+            <label for="modelSelect">🎯 Seleziona Modello:</label>
+            <select id="modelSelect">
+                <option value="Xenova/whisper-tiny">Tiny - Veloce (~40MB) - Qualità Base</option>
+                <option value="Xenova/whisper-base" selected>Base - Bilanciato (~140MB) - Qualità Buona ⭐</option>
+                <option value="Xenova/whisper-small">Small - Lento (~480MB) - Qualità Ottima</option>
+            </select>
+            <div class="model-info" id="modelInfo">
+                📊 Base è consigliato: buon compromesso tra velocità e accuratezza
+            </div>
         </div>
 
         <div class="loading-section" id="loadingSection">
             <div class="loading-spinner"></div>
             <div id="loadingText">Caricamento del modello Whisper in corso...</div>
-            <div style="font-size: 12px; margin-top: 10px; color: #666;">Questo può richiedere 1-2 minuti al primo avvio</div>
+            <div style="font-size: 12px; margin-top: 10px; color: #666;">Questo può richiedere alcuni minuti al primo avvio</div>
         </div>
 
         <div class="upload-area" id="uploadArea">
@@ -318,22 +360,41 @@
         const exportBtn = document.getElementById('exportBtn');
         const loadingSection = document.getElementById('loadingSection');
         const loadingText = document.getElementById('loadingText');
+        const modelSelect = document.getElementById('modelSelect');
+        const modelInfo = document.getElementById('modelInfo');
 
         let files = [];
         let transcriber = null;
         let audioContext = null;
+        let currentModel = 'Xenova/whisper-base';
+
+        // Aggiorna info modello
+        modelSelect.addEventListener('change', (e) => {
+            const modelInfos = {
+                'Xenova/whisper-tiny': '⚡ Veloce ma meno accurato. Buono per test rapidi.',
+                'Xenova/whisper-base': '⭐ Consigliato: ottimo compromesso qualità/velocità.',
+                'Xenova/whisper-small': '🎯 Massima qualità ma più lento. Per audio difficili.'
+            };
+            modelInfo.textContent = modelInfos[e.target.value];
+            
+            if (transcriber) {
+                alert('Cambiando modello dovrai ricaricare la pagina. Vuoi continuare?');
+            }
+        });
 
         // Inizializza il modello Whisper
         async function initWhisper() {
             try {
+                currentModel = modelSelect.value;
                 loadingSection.classList.add('active');
                 uploadArea.classList.add('disabled');
+                modelSelect.disabled = true;
                 
-                loadingText.textContent = 'Caricamento del modello Whisper... (prima volta: ~40MB)';
+                loadingText.textContent = `Caricamento del modello ${currentModel.split('/')[1]}...`;
                 
                 transcriber = await pipeline(
                     'automatic-speech-recognition',
-                    'Xenova/whisper-tiny',
+                    currentModel,
                     { 
                         quantized: true,
                         progress_callback: (progress) => {
@@ -508,6 +569,45 @@
             }
         }
 
+        // Normalizza audio per migliorare la qualità
+        function normalizeAudio(audioData) {
+            // Trova il massimo valore assoluto
+            let maxAmp = 0;
+            for (let i = 0; i < audioData.length; i++) {
+                const abs = Math.abs(audioData[i]);
+                if (abs > maxAmp) maxAmp = abs;
+            }
+            
+            // Normalizza se necessario (evita clipping)
+            if (maxAmp > 0 && maxAmp < 0.95) {
+                const factor = 0.95 / maxAmp;
+                const normalized = new Float32Array(audioData.length);
+                for (let i = 0; i < audioData.length; i++) {
+                    normalized[i] = audioData[i] * factor;
+                }
+                return normalized;
+            }
+            
+            return audioData;
+        }
+
+        // Applica filtro passa-alto per ridurre rumori bassi
+        function highPassFilter(audioData, sampleRate) {
+            const cutoffFreq = 80; // Hz
+            const RC = 1.0 / (cutoffFreq * 2 * Math.PI);
+            const dt = 1.0 / sampleRate;
+            const alpha = RC / (RC + dt);
+            
+            const filtered = new Float32Array(audioData.length);
+            filtered[0] = audioData[0];
+            
+            for (let i = 1; i < audioData.length; i++) {
+                filtered[i] = alpha * (filtered[i - 1] + audioData[i] - audioData[i - 1]);
+            }
+            
+            return filtered;
+        }
+
         // Converti audio file in array per Whisper
         async function audioFileToArray(file) {
             initAudioContext();
@@ -534,6 +634,10 @@
             if (audioBuffer.sampleRate !== targetSampleRate) {
                 audioData = resampleAudio(audioData, audioBuffer.sampleRate, targetSampleRate);
             }
+            
+            // Applica miglioramenti audio
+            audioData = highPassFilter(audioData, targetSampleRate);
+            audioData = normalizeAudio(audioData);
             
             return audioData;
         }
@@ -563,7 +667,12 @@
                 task: 'transcribe',
                 chunk_length_s: 30,
                 stride_length_s: 5,
-                return_timestamps: false
+                return_timestamps: false,
+                // Parametri aggiuntivi per migliorare la qualità
+                temperature: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                compression_ratio_threshold: 2.4,
+                logprob_threshold: -1.0,
+                no_speech_threshold: 0.6
             });
             
             return output.text;

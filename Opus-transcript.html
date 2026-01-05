@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trascrittore Audio OPUS</title>
+    <title>Trascrittore Audio OPUS - Gratuito</title>
     <style>
         * {
             margin: 0;
@@ -38,8 +38,52 @@
 
         .subtitle {
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 14px;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #0c5460;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .loading-section {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .loading-section.active {
+            display: block;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .upload-area {
@@ -61,6 +105,11 @@
             border-color: #764ba2;
             background: #e8ebff;
             transform: scale(1.02);
+        }
+
+        .upload-area.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .upload-icon {
@@ -185,21 +234,6 @@
             background: #5a6268;
         }
 
-        .progress-bar {
-            height: 4px;
-            background: #e9ecef;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s;
-        }
-
         .copy-btn {
             padding: 6px 15px;
             font-size: 12px;
@@ -215,36 +249,42 @@
             border-radius: 5px;
         }
 
-        .warning-box {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #856404;
-        }
-
-        .warning-box strong {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .audio-duration {
+        .progress-text {
             font-size: 12px;
             color: #666;
             margin-top: 5px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎙️ Trascrittore Audio OPUS</h1>
-        <p class="subtitle">Carica file .opus per trascriverli automaticamente in testo</p>
+        <p class="subtitle">100% Gratuito - Whisper AI locale nel browser</p>
 
-        <div class="warning-box">
-            <strong>⚠️ Requisiti:</strong>
-            Usa Chrome o Edge. Richiede connessione internet per la trascrizione.
+        <div class="info-box">
+            <strong>✨ Completamente gratuito e privato!</strong>
+            Al primo utilizzo scaricherà il modello Whisper (~40MB). Tutto funziona localmente nel tuo browser, nessun dato viene inviato online.
+        </div>
+
+        <div class="loading-section" id="loadingSection">
+            <div class="loading-spinner"></div>
+            <div id="loadingText">Caricamento del modello Whisper in corso...</div>
+            <div style="font-size: 12px; margin-top: 10px; color: #666;">Questo può richiedere 1-2 minuti al primo avvio</div>
         </div>
 
         <div class="upload-area" id="uploadArea">
@@ -263,21 +303,62 @@
         <div class="file-list" id="fileList"></div>
     </div>
 
-    <script>
+    <script type="module">
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+        // Configurazione
+        env.allowLocalModels = false;
+        env.allowRemoteModels = true;
+
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const fileList = document.getElementById('fileList');
         const transcribeBtn = document.getElementById('transcribeBtn');
         const clearBtn = document.getElementById('clearBtn');
         const exportBtn = document.getElementById('exportBtn');
+        const loadingSection = document.getElementById('loadingSection');
+        const loadingText = document.getElementById('loadingText');
 
         let files = [];
+        let transcriber = null;
         let audioContext = null;
 
-        // Verifica supporto browser
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            alert('⚠️ Il tuo browser non supporta la trascrizione vocale. Usa Chrome o Edge.');
+        // Inizializza il modello Whisper
+        async function initWhisper() {
+            try {
+                loadingSection.classList.add('active');
+                uploadArea.classList.add('disabled');
+                
+                loadingText.textContent = 'Caricamento del modello Whisper... (prima volta: ~40MB)';
+                
+                transcriber = await pipeline(
+                    'automatic-speech-recognition',
+                    'Xenova/whisper-tiny',
+                    { 
+                        quantized: true,
+                        progress_callback: (progress) => {
+                            if (progress.status === 'downloading') {
+                                const percent = Math.round((progress.loaded / progress.total) * 100);
+                                loadingText.textContent = `Download modello: ${percent}%`;
+                            } else if (progress.status === 'loading') {
+                                loadingText.textContent = 'Inizializzazione modello...';
+                            }
+                        }
+                    }
+                );
+                
+                loadingSection.classList.remove('active');
+                uploadArea.classList.remove('disabled');
+                console.log('Whisper caricato con successo!');
+            } catch (error) {
+                console.error('Errore caricamento Whisper:', error);
+                loadingText.textContent = `Errore: ${error.message}`;
+                alert('Errore nel caricamento del modello. Ricarica la pagina.');
+            }
         }
+
+        // Inizializza all'avvio
+        initWhisper();
 
         // Inizializza AudioContext
         function initAudioContext() {
@@ -287,11 +368,19 @@
         }
 
         // Gestione drag & drop
-        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('click', () => {
+            if (!transcriber) {
+                alert('Attendi il caricamento del modello...');
+                return;
+            }
+            fileInput.click();
+        });
         
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadArea.classList.add('dragover');
+            if (transcriber) {
+                uploadArea.classList.add('dragover');
+            }
         });
 
         uploadArea.addEventListener('dragleave', () => {
@@ -301,6 +390,10 @@
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
+            if (!transcriber) {
+                alert('Attendi il caricamento del modello...');
+                return;
+            }
             handleFiles(e.dataTransfer.files);
         });
 
@@ -345,16 +438,22 @@
                     <span class="file-name">📄 ${fileName} <span style="color: #999; font-weight: normal;">(${sizeKB} KB)</span></span>
                     <span class="file-status status-pending">In attesa</span>
                 </div>
+                <div class="progress-bar" style="display: none;">
+                    <div class="progress-fill"></div>
+                </div>
             `;
             fileList.appendChild(fileItem);
         }
 
         // Aggiorna stato file
-        function updateFileStatus(fileId, status, transcription = '', error = null) {
+        function updateFileStatus(fileId, status, transcription = '', error = null, progress = 0) {
             const fileItem = document.getElementById(`file-${fileId}`);
             if (!fileItem) return;
 
             const statusEl = fileItem.querySelector('.file-status');
+            const progressBar = fileItem.querySelector('.progress-bar');
+            const progressFill = fileItem.querySelector('.progress-fill');
+
             const statusTexts = {
                 pending: 'In attesa',
                 processing: 'Elaborazione...',
@@ -364,6 +463,14 @@
 
             statusEl.textContent = statusTexts[status];
             statusEl.className = `file-status status-${status}`;
+
+            // Mostra progress bar durante elaborazione
+            if (status === 'processing') {
+                progressBar.style.display = 'block';
+                progressFill.style.width = `${progress}%`;
+            } else {
+                progressBar.style.display = 'none';
+            }
 
             // Aggiorna l'oggetto file
             const fileObj = files.find(f => f.id === fileId);
@@ -401,151 +508,99 @@
             }
         }
 
-        // Converti OPUS in formato utilizzabile
-        async function processAudioFile(file) {
+        // Converti audio file in array per Whisper
+        async function audioFileToArray(file) {
             initAudioContext();
             
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                
-                return audioBuffer;
-            } catch (error) {
-                throw new Error(`Impossibile decodificare l'audio: ${error.message}`);
+            const arrayBuffer = await file.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // Converti in mono se necessario e ottieni i campioni
+            let audioData;
+            if (audioBuffer.numberOfChannels === 1) {
+                audioData = audioBuffer.getChannelData(0);
+            } else {
+                // Mix stereo to mono
+                const left = audioBuffer.getChannelData(0);
+                const right = audioBuffer.getChannelData(1);
+                audioData = new Float32Array(left.length);
+                for (let i = 0; i < left.length; i++) {
+                    audioData[i] = (left[i] + right[i]) / 2;
+                }
             }
+            
+            // Ricampiona a 16kHz se necessario
+            const targetSampleRate = 16000;
+            if (audioBuffer.sampleRate !== targetSampleRate) {
+                audioData = resampleAudio(audioData, audioBuffer.sampleRate, targetSampleRate);
+            }
+            
+            return audioData;
         }
 
-        // Trascrivi usando Web Speech API con audio registrato
-        async function transcribeAudio(fileId, audioBuffer) {
-            return new Promise((resolve, reject) => {
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    reject(new Error('Web Speech API non supportata'));
-                    return;
-                }
-
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                const recognition = new SpeechRecognition();
+        // Ricampionamento audio
+        function resampleAudio(audioData, fromSampleRate, toSampleRate) {
+            const ratio = fromSampleRate / toSampleRate;
+            const newLength = Math.round(audioData.length / ratio);
+            const result = new Float32Array(newLength);
+            
+            for (let i = 0; i < newLength; i++) {
+                const srcIndex = i * ratio;
+                const srcIndexFloor = Math.floor(srcIndex);
+                const srcIndexCeil = Math.min(srcIndexFloor + 1, audioData.length - 1);
+                const t = srcIndex - srcIndexFloor;
                 
-                recognition.lang = 'it-IT';
-                recognition.continuous = true;
-                recognition.interimResults = false;
-                recognition.maxAlternatives = 1;
+                result[i] = audioData[srcIndexFloor] * (1 - t) + audioData[srcIndexCeil] * t;
+            }
+            
+            return result;
+        }
 
-                let transcript = '';
-                let isRecognizing = false;
-
-                recognition.onstart = () => {
-                    isRecognizing = true;
-                    console.log('Riconoscimento avviato');
-                };
-
-                recognition.onresult = (event) => {
-                    console.log('Risultato ricevuto');
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        if (event.results[i].isFinal) {
-                            transcript += event.results[i][0].transcript + ' ';
-                        }
-                    }
-                };
-
-                recognition.onerror = (event) => {
-                    console.error('Errore riconoscimento:', event.error);
-                    let errorMsg = 'Errore sconosciuto';
-                    
-                    switch(event.error) {
-                        case 'no-speech':
-                            errorMsg = 'Nessun parlato rilevato nell\'audio';
-                            break;
-                        case 'network':
-                            errorMsg = 'Errore di rete - verifica la connessione internet';
-                            break;
-                        case 'not-allowed':
-                            errorMsg = 'Microfono non autorizzato';
-                            break;
-                        case 'service-not-allowed':
-                            errorMsg = 'Servizio di trascrizione non disponibile';
-                            break;
-                        case 'audio-capture':
-                            errorMsg = 'Impossibile catturare l\'audio';
-                            break;
-                        default:
-                            errorMsg = `Errore: ${event.error}`;
-                    }
-                    
-                    reject(new Error(errorMsg));
-                };
-
-                recognition.onend = () => {
-                    console.log('Riconoscimento terminato');
-                    isRecognizing = false;
-                    
-                    if (transcript.trim()) {
-                        resolve(transcript.trim());
-                    } else {
-                        reject(new Error('Nessun testo trascritto - l\'audio potrebbe essere troppo corto o senza parlato'));
-                    }
-                };
-
-                // Crea un elemento audio per riprodurre (senza far partire l'audio realmente)
-                // e avviare il riconoscimento
-                try {
-                    // Crea MediaStreamDestination
-                    const destination = audioContext.createMediaStreamDestination();
-                    const source = audioContext.createBufferSource();
-                    source.buffer = audioBuffer;
-                    source.connect(destination);
-                    
-                    // NON collegare al output per evitare che l'audio parta
-                    // source.connect(audioContext.destination);
-                    
-                    // Avvia riconoscimento prima di far partire l'audio
-                    recognition.start();
-                    
-                    // Fai partire l'audio SOLO attraverso il MediaStream (non agli speaker)
-                    source.start(0);
-                    
-                    // Ferma il riconoscimento quando l'audio finisce
-                    source.onended = () => {
-                        setTimeout(() => {
-                            if (isRecognizing) {
-                                recognition.stop();
-                            }
-                        }, 1000); // Attendi 1 secondo per eventuali risultati finali
-                    };
-                    
-                } catch (error) {
-                    reject(new Error(`Errore nell'elaborazione audio: ${error.message}`));
-                }
+        // Trascrivi con Whisper locale
+        async function transcribeWithWhisper(fileId, audioData) {
+            const output = await transcriber(audioData, {
+                language: 'italian',
+                task: 'transcribe',
+                chunk_length_s: 30,
+                stride_length_s: 5,
+                return_timestamps: false
             });
+            
+            return output.text;
         }
 
         // Trascrivi tutti i file
         async function transcribeAll() {
+            if (!transcriber) {
+                alert('Il modello non è ancora pronto. Attendi...');
+                return;
+            }
+
             transcribeBtn.disabled = true;
             
             for (const fileObj of files) {
                 if (fileObj.status !== 'pending') continue;
 
-                updateFileStatus(fileObj.id, 'processing');
-
                 try {
-                    // Processa l'audio
-                    const audioBuffer = await processAudioFile(fileObj.file);
+                    updateFileStatus(fileObj.id, 'processing', '', null, 30);
                     
-                    // Attendi un po' tra un file e l'altro per evitare problemi con l'API
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Converti audio
+                    const audioData = await audioFileToArray(fileObj.file);
+                    updateFileStatus(fileObj.id, 'processing', '', null, 60);
                     
                     // Trascrivi
-                    const transcription = await transcribeAudio(fileObj.id, audioBuffer);
+                    const transcription = await transcribeWithWhisper(fileObj.id, audioData);
+                    updateFileStatus(fileObj.id, 'processing', '', null, 90);
                     
-                    updateFileStatus(fileObj.id, 'success', transcription);
+                    if (!transcription || transcription.trim() === '') {
+                        throw new Error('Nessun testo trascritto - audio potrebbe essere silenzioso');
+                    }
+                    
+                    updateFileStatus(fileObj.id, 'success', transcription.trim());
                 } catch (error) {
                     console.error('Errore trascrizione:', error);
                     updateFileStatus(fileObj.id, 'error', '', error.message);
                 }
-                
-                // Pausa tra i file
-                await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
             transcribeBtn.disabled = false;

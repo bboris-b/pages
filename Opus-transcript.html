@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trascrittore Audio OPUS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 30px;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .file-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processing {
+            background: #cfe2ff;
+            color: #084298;
+        }
+
+        .status-success {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .transcription {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            display: none;
+        }
+
+        .copy-btn {
+            padding: 6px 15px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .error-msg {
+            color: #842029;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎙️ Trascrittore Audio OPUS</h1>
+        <p class="subtitle">Carica file .opus per trascriverli automaticamente in testo</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Trascina i file qui o clicca per selezionare</div>
+            <div class="upload-hint">Supporta file .opus (singoli o multipli)</div>
+            <input type="file" id="fileInput" accept=".opus" multiple>
+        </div>
+
+        <div class="buttons">
+            <button id="transcribeBtn" disabled>Trascrivi Tutti</button>
+            <button id="clearBtn" class="btn-secondary">Pulisci Lista</button>
+            <button id="exportBtn" class="btn-secondary">Esporta JSON</button>
+        </div>
+
+        <div class="file-list" id="fileList"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const exportBtn = document.getElementById('exportBtn');
+
+        let files = [];
+        let audioContext = null;
+
+        // Inizializza AudioContext
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Gestione drag & drop
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // Gestisci file caricati
+        function handleFiles(newFiles) {
+            const opusFiles = Array.from(newFiles).filter(file => 
+                file.name.toLowerCase().endsWith('.opus')
+            );
+
+            if (opusFiles.length === 0) {
+                alert('Seleziona almeno un file .opus');
+                return;
+            }
+
+            opusFiles.forEach(file => {
+                const fileId = Date.now() + Math.random();
+                files.push({
+                    id: fileId,
+                    file: file,
+                    status: 'pending',
+                    transcription: '',
+                    error: null
+                });
+                addFileToList(fileId, file.name);
+            });
+
+            transcribeBtn.disabled = false;
+        }
+
+        // Aggiungi file alla lista visuale
+        function addFileToList(fileId, fileName) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.id = `file-${fileId}`;
+            fileItem.innerHTML = `
+                <div class="file-header">
+                    <span class="file-name">📄 ${fileName}</span>
+                    <span class="file-status status-pending">In attesa</span>
+                </div>
+                <div class="progress-bar" style="display: none;">
+                    <div class="progress-fill"></div>
+                </div>
+            `;
+            fileList.appendChild(fileItem);
+        }
+
+        // Aggiorna stato file
+        function updateFileStatus(fileId, status, transcription = '', error = null) {
+            const fileItem = document.getElementById(`file-${fileId}`);
+            if (!fileItem) return;
+
+            const statusEl = fileItem.querySelector('.file-status');
+            const statusTexts = {
+                pending: 'In attesa',
+                processing: 'Elaborazione...',
+                success: 'Completato ✓',
+                error: 'Errore ✗'
+            };
+
+            statusEl.textContent = statusTexts[status];
+            statusEl.className = `file-status status-${status}`;
+
+            // Aggiorna l'oggetto file
+            const fileObj = files.find(f => f.id === fileId);
+            if (fileObj) {
+                fileObj.status = status;
+                fileObj.transcription = transcription;
+                fileObj.error = error;
+            }
+
+            // Mostra trascrizione o errore
+            const existingContent = fileItem.querySelector('.transcription, .error-msg');
+            if (existingContent) existingContent.remove();
+
+            if (status === 'success' && transcription) {
+                const transcriptionDiv = document.createElement('div');
+                transcriptionDiv.className = 'transcription';
+                transcriptionDiv.textContent = transcription;
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.textContent = 'Copia';
+                copyBtn.onclick = () => {
+                    navigator.clipboard.writeText(transcription);
+                    copyBtn.textContent = 'Copiato!';
+                    setTimeout(() => copyBtn.textContent = 'Copia', 2000);
+                };
+                
+                fileItem.appendChild(transcriptionDiv);
+                fileItem.querySelector('.file-header').appendChild(copyBtn);
+            } else if (status === 'error' && error) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-msg';
+                errorDiv.textContent = error;
+                fileItem.appendChild(errorDiv);
+            }
+        }
+
+        // Converti OPUS in WAV usando Web Audio API
+        async function convertOpusToWav(file) {
+            initAudioContext();
+            
+            const arrayBuffer = await file.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // Converti in WAV
+            const wav = audioBufferToWav(audioBuffer);
+            return new Blob([wav], { type: 'audio/wav' });
+        }
+
+        // Converti AudioBuffer in WAV
+        function audioBufferToWav(buffer) {
+            const length = buffer.length * buffer.numberOfChannels * 2 + 44;
+            const arrayBuffer = new ArrayBuffer(length);
+            const view = new DataView(arrayBuffer);
+            const channels = [];
+            let offset = 0;
+            let pos = 0;
+
+            // WAV header
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8); // file length - 8
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt " chunk
+            setUint32(16); // length = 16
+            setUint16(1); // PCM (uncompressed)
+            setUint16(buffer.numberOfChannels);
+            setUint32(buffer.sampleRate);
+            setUint32(buffer.sampleRate * 2 * buffer.numberOfChannels); // avg. bytes/sec
+            setUint16(buffer.numberOfChannels * 2); // block-align
+            setUint16(16); // 16-bit
+            setUint32(0x61746164); // "data" - chunk
+            setUint32(length - pos - 4); // chunk length
+
+            // Write interleaved data
+            for (let i = 0; i < buffer.numberOfChannels; i++) {
+                channels.push(buffer.getChannelData(i));
+            }
+
+            while (pos < length) {
+                for (let i = 0; i < buffer.numberOfChannels; i++) {
+                    const sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    view.setInt16(pos, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return arrayBuffer;
+
+            function setUint16(data) {
+                view.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(pos, data, true);
+                pos += 4;
+            }
+        }
+
+        // Trascrivi usando Web Speech API
+        async function transcribeAudio(fileId, audioBlob) {
+            return new Promise((resolve, reject) => {
+                // Crea elemento audio temporaneo
+                const audio = document.createElement('audio');
+                audio.src = URL.createObjectURL(audioBlob);
+                
+                // Usa Web Speech API con MediaStream
+                audio.play().then(() => {
+                    const stream = audio.captureStream ? audio.captureStream() : audio.mozCaptureStream();
+                    
+                    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                        reject(new Error('Web Speech API non supportata in questo browser'));
+                        return;
+                    }
+
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const recognition = new SpeechRecognition();
+                    
+                    recognition.lang = 'it-IT';
+                    recognition.continuous = true;
+                    recognition.interimResults = false;
+
+                    let transcript = '';
+
+                    recognition.onresult = (event) => {
+                        for (let i = event.resultIndex; i < event.results.length; i++) {
+                            transcript += event.results[i][0].transcript + ' ';
+                        }
+                    };
+
+                    recognition.onerror = (event) => {
+                        reject(new Error(`Errore riconoscimento: ${event.error}`));
+                    };
+
+                    recognition.onend = () => {
+                        audio.pause();
+                        URL.revokeObjectURL(audio.src);
+                        resolve(transcript.trim() || 'Nessun parlato riconosciuto');
+                    };
+
+                    audio.onended = () => {
+                        recognition.stop();
+                    };
+
+                    recognition.start();
+                }).catch(reject);
+            });
+        }
+
+        // Trascrivi tutti i file
+        async function transcribeAll() {
+            transcribeBtn.disabled = true;
+            
+            for (const fileObj of files) {
+                if (fileObj.status !== 'pending') continue;
+
+                updateFileStatus(fileObj.id, 'processing');
+
+                try {
+                    // Converti OPUS in WAV
+                    const wavBlob = await convertOpusToWav(fileObj.file);
+                    
+                    // Trascrivi
+                    const transcription = await transcribeAudio(fileObj.id, wavBlob);
+                    
+                    updateFileStatus(fileObj.id, 'success', transcription);
+                } catch (error) {
+                    updateFileStatus(fileObj.id, 'error', '', error.message);
+                }
+            }
+
+            transcribeBtn.disabled = false;
+        }
+
+        // Pulisci lista
+        function clearList() {
+            files = [];
+            fileList.innerHTML = '';
+            transcribeBtn.disabled = true;
+        }
+
+        // Esporta JSON
+        function exportJSON() {
+            const results = files.map(f => ({
+                filename: f.file.name,
+                status: f.status,
+                transcription: f.transcription,
+                error: f.error,
+                timestamp: new Date().toISOString()
+            }));
+
+            const dataStr = JSON.stringify(results, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trascrizioni_${new Date().getTime()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Event listeners
+        transcribeBtn.addEventListener('click', transcribeAll);
+        clearBtn.addEventListener('click', clearList);
+        exportBtn.addEventListener('click', exportJSON);
+    </script>
+</body>
+</html>
